@@ -1,0 +1,40 @@
+{
+	"metadata": {
+		"version": 4.3,
+		"type": "Object",
+		"generator": "ObjectExporter"
+	},
+	"geometries": [
+		{
+			"uuid": "8BB0B980-87A1-41E7-8F60-9F28B88CEF5E",
+			"type": "SphereGeometry",
+			"radius": 2,
+			"widthSegments": 3,
+			"heightSegments": 3,
+			"phiStart": 0,
+			"phiLength": 6.28,
+			"thetaStart": 0,
+			"thetaLength": 3.14
+		}],
+	"materials": [
+		{
+			"uuid": "B97A8F7F-D61E-4FED-B059-68A2F2D53BDC",
+			"type": "MeshPhongMaterial",
+			"color": 16777215,
+			"ambient": 16777215,
+			"emissive": 5502180,
+			"specular": 1118481,
+			"shininess": 30,
+			"opacity": 1,
+			"transparent": false,
+			"wireframe": false
+		}],
+	"object": {
+		"uuid": "70A2F609-47E3-450A-B0A0-8EA8C1C36636",
+		"name": "Sphere 2",
+		"type": "Mesh",
+		"geometry": "8BB0B980-87A1-41E7-8F60-9F28B88CEF5E",
+		"material": "B97A8F7F-D61E-4FED-B059-68A2F2D53BDC",
+		"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]
+	}
+}

@@ -1,0 +1,37 @@
+{
+	"metadata": {
+		"version": 4.3,
+		"type": "Object",
+		"generator": "ObjectExporter"
+	},
+	"geometries": [
+		{
+			"uuid": "9FCC29D3-F097-4819-9536-B53DB119C656",
+			"type": "PlaneGeometry",
+			"width": 5000,
+			"height": 5000,
+			"widthSegments": 10,
+			"heightSegments": 10
+		}],
+	"materials": [
+		{
+			"uuid": "04DA46B0-D36C-4E1B-9336-93C7E6197868",
+			"type": "MeshPhongMaterial",
+			"color": 16777215,
+			"ambient": 16777215,
+			"emissive": 14540253,
+			"specular": 1118481,
+			"shininess": 30,
+			"opacity": 1,
+			"transparent": false,
+			"wireframe": false
+		}],
+	"object": {
+		"uuid": "E58ACDE3-1650-464D-BEC9-0BFD18B2D3A3",
+		"name": "Plane 1",
+		"type": "Mesh",
+		"geometry": "9FCC29D3-F097-4819-9536-B53DB119C656",
+		"material": "04DA46B0-D36C-4E1B-9336-93C7E6197868",
+		"matrix": [1,0,0,0,0,0.0007963267271406949,-0.9999997019767761,0,0,0.9999997019767761,0.0007963267271406949,0,0,0,0,1]
+	}
+}

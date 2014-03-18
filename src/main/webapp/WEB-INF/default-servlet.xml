@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+
+    <mvc:annotation-driven/>
+
+    <!-- Scanning components -->
+    <context:component-scan base-package="game3d.websocketserver"/>
+    <context:component-scan base-package="game3d.app.controllers"/>
+
+    <!-- Client Non-Secure WebSocket Server Bean -->
+    <bean id="webSocketServer" class="game3d.websocketserver.bean.ServerBean" init-method="startServer"
+          destroy-method="stopServer">
+        <property name="port" value="9879"/>
+        <property name="bossGroupThreadSize" value="4"/>
+        <property name="workGroupThreadSize" value="4"/>
+        <property name="channelInitializer">
+            <bean class="game3d.websocketserver.WebSocketServerInitializer"/>
+        </property>
+    </bean>
+
+    <!-- Socket channel message handler -->
+    <bean id="socketChannelHandler" scope="prototype" class="game3d.websocketserver.WebSocketServerHandler">
+        <property name="packageProcessor" ref="devicePackageProcessor"/>
+    </bean>
+
+    <!-- Socket package processor -->
+    <bean id="devicePackageProcessor" class="game3d.socketserver.DevicePackageProcessor"/>
+
+    <!-- Enable annotations for MVC -->
+    <mvc:annotation-driven/>
+    <context:annotation-config/>
+
+
+    <!-- The MVC resources tag does the magic -->
+    <mvc:resources mapping="/resources/**" location="/resources/"/>
+
+
+    <bean id="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"></property>
+        <property name="prefix" value="/WEB-INF/jsp/"></property>
+        <property name="suffix" value=".jsp"></property>
+    </bean>
+</beans>
