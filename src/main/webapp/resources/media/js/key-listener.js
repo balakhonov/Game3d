@@ -16,7 +16,7 @@ function KeyHandler() {
 
 	window.addEventListener('keydown', function (e) {
 		if (!eventStatusMap[e.keyCode]) {
-			console.info("keydown", e.keyCode);
+//			console.info("keydown", e.keyCode);
 			eventStatusMap[e.keyCode] = true;
 			startAction(e.keyCode, eventDownActionMap);
 		}

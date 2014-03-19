@@ -41,23 +41,28 @@ public class GameModel {
 
 				synchronized (WebSocketServerHandler.ACTIVE_TANKS) {
 					for (Tank tank : WebSocketServerHandler.ACTIVE_TANKS.values()) {
-						if (tank.isMoveForwardFlag())
-							tank.moveForward();
-						else if (tank.isMoveBackFlag())
-							tank.moveBack();
+						// check connection timeout
+						tank.getConnectionTimeoutHandler().checkTimeout();
+						
+						if (tank.getConnectionTimeoutHandler().isActive()) {
+							if (tank.isMoveForwardFlag())
+								tank.moveForward();
+							else if (tank.isMoveBackFlag())
+								tank.moveBack();
 
-						if (tank.isTurnLeftFlag())
-							tank.turnLeft();
-						else if (tank.isTurnRightFlag())
-							tank.turnRight();
+							if (tank.isTurnLeftFlag())
+								tank.turnLeft();
+							else if (tank.isTurnRightFlag())
+								tank.turnRight();
 
-						if (tank.isMoveForwardFlag() || tank.isMoveBackFlag() || tank.isTurnLeftFlag()
-								|| tank.isTurnRightFlag()) {
-							long diff = currentDateTime - startDate;
+							if (tank.isMoveForwardFlag() || tank.isMoveBackFlag()
+									|| tank.isTurnLeftFlag() || tank.isTurnRightFlag()) {
+								long diff = currentDateTime - startDate;
 
-							if (diff > 60) {
-								positionChange = true;
-								ObjectHandler.updatePosition(1, tank);
+								if (diff > 60) {
+									positionChange = true;
+									ObjectHandler.updatePosition(1, tank);
+								}
 							}
 						}
 					}
@@ -93,7 +98,6 @@ public class GameModel {
 		}, 0, 10, TimeUnit.MILLISECONDS);
 	}
 
-
 	public GameModel(DeviceSocketChannel ac) {
 		if (ac == null) {
 			throw new IllegalArgumentException("ChannelActivity should not be null");
@@ -103,14 +107,12 @@ public class GameModel {
 		this.tank = WebSocketServerHandler.ACTIVE_TANKS.get(userId);
 	}
 
-
 	@DeviceRequest(command = "forwardDown")
 	public ResponsePackageData forwardDown() {
 		LOG.warn("forwardDown" + tank.getId());
 		tank.setMoveForwardFlag(true);
 		return null;
 	}
-
 
 	@DeviceRequest(command = "forwardUp")
 	public ResponsePackageData forwardUp() {
@@ -120,14 +122,12 @@ public class GameModel {
 		return null;
 	}
 
-
 	@DeviceRequest(command = "backDown")
 	public ResponsePackageData backDown() {
 		LOG.warn("backDown" + tank);
 		tank.setMoveBackFlag(true);
 		return null;
 	}
-
 
 	@DeviceRequest(command = "backUp")
 	public ResponsePackageData backUp() {
@@ -137,14 +137,12 @@ public class GameModel {
 		return null;
 	}
 
-
 	@DeviceRequest(command = "rotateLeftDown")
 	public ResponsePackageData rotateLeftDown() {
 		LOG.warn("rotateLeftDown" + tank.getId());
 		tank.setTurnLeftFlag(true);
 		return null;
 	}
-
 
 	@DeviceRequest(command = "rotateLeftUp")
 	public ResponsePackageData rotateLeftUp() {
@@ -154,14 +152,12 @@ public class GameModel {
 		return null;
 	}
 
-
 	@DeviceRequest(command = "rotateRightDown")
 	public ResponsePackageData rotateRightDown() {
 		LOG.warn("rotateRightDown" + tank.getId());
 		tank.setTurnRightFlag(true);
 		return null;
 	}
-
 
 	@DeviceRequest(command = "rotateRightUp")
 	public ResponsePackageData rotateRightUp() {

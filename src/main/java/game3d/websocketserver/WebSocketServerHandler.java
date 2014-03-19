@@ -1,5 +1,6 @@
 package game3d.websocketserver;
 
+import game3d.app.controllers.IndexController;
 import game3d.mapping.Tank;
 import game3d.socketserver.DevicePackageProcessor;
 import game3d.socketserver.model.DeviceSocketChannel;
@@ -16,6 +17,7 @@ import io.netty.handler.mapping.ResponsePackageData;
 import io.netty.handler.timeout.IdleTimeoutListener;
 import io.netty.handler.timeout.auth.AtuhTimeoutListener;
 import io.netty.util.CharsetUtil;
+
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Required;
@@ -52,7 +54,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			t.setpX(-1 * r.nextInt(30));
 			t.setpZ(-1 * r.nextInt(30));
 			t.setTankType(tankType);
-			LOG.info("tankType:" + tankType);
 			WebSocketServerHandler.ACTIVE_TANKS.put(t.getUserId(), t);
 		}
 
@@ -67,23 +68,24 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 						t.setTurnLeftFlag(false);
 						t.setTurnRightFlag(false);
 
-						if (t.getpZ() > 100 || t.getpZ() < -100 || t.getpX() > 100 || t.getpX() < -100) {
+						if (t.getpZ() > 100 || t.getpZ() < -100 || t.getpX() > 100
+								|| t.getpX() < -100) {
 							t.setMoveBackFlag(true);
 						} else {
 							int act = r.nextInt(3);
 							switch (act) {
-								case 0:
-									t.setMoveForwardFlag(true);
-									break;
-								case 1:
-									t.setMoveForwardFlag(true);
-									break;
-								case 2:
-									t.setTurnLeftFlag(true);
-									break;
-								case 3:
-									t.setTurnRightFlag(true);
-									break;
+							case 0:
+								t.setMoveForwardFlag(true);
+								break;
+							case 1:
+								t.setMoveForwardFlag(true);
+								break;
+							case 2:
+								t.setTurnLeftFlag(true);
+								break;
+							case 3:
+								t.setTurnRightFlag(true);
+								break;
 							}
 						}
 					}
@@ -107,17 +109,14 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
 	private DeviceInfo di;
 
-
 	public WebSocketServerHandler() {
 
 	}
-
 
 	@Required
 	public void setPackageProcessor(DevicePackageProcessor packageProcessor) {
 		this.packageProcessor = packageProcessor;
 	}
-
 
 	@Override
 	public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -131,12 +130,10 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		}
 	}
 
-
 	@Override
 	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
 		ctx.flush();
 	}
-
 
 	public static void writeToRoom(Package pack, int companyId) {
 		Set<Channel> channels = ACTIVE_CHANNELS.get("1");
@@ -151,7 +148,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		}
 	}
 
-
 	public static void channelWrite(Channel channel, Package pack) {
 		try {
 			String jsonData = mapper.writeValueAsString(pack);
@@ -161,7 +157,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			throw new IllegalStateException(e);
 		}
 	}
-
 
 	private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) throws Exception {
 		// LOG.debug("ChannelHandlerContext: " + ctx + " FullHttpRequest" +
@@ -179,36 +174,36 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			return;
 		}
 
-		// Handshake
-		WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
-				getWebSocketLocation(req), null, false);
-		handshaker = wsFactory.newHandshaker(req);
-		if (handshaker == null) {
-			WebSocketServerHandshakerFactory.sendUnsupportedWebSocketVersionResponse(ctx.channel());
-		} else {
-			handshaker.handshake(ctx.channel(), req);
-		}
-
-		// register channel to user authentication
 		String sessionId = req.getUri().substring(1);
-		LOG.debug("req.getUri: " + req.getUri());
+		LOG.debug("sessionId: " + sessionId);
 
-		di = new DeviceInfo();
-		di.setSessionId(sessionId);
+		if (IndexController.USERS_MAP.containsKey(sessionId)) {
+			// Handshake
+			WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
+					getWebSocketLocation(req), null, false);
+			handshaker = wsFactory.newHandshaker(req);
+			if (handshaker == null) {
+				WebSocketServerHandshakerFactory.sendUnsupportedWebSocketVersionResponse(ctx
+						.channel());
+			} else {
+				handshaker.handshake(ctx.channel(), req);
+			}
 
-		registerChannelToAuthCompany(ctx.channel(), sessionId);
+			di = new DeviceInfo();
+			di.setSessionId(sessionId);
 
+			registerChannelToAuthCompany(ctx.channel(), sessionId);
 
-		// initialize all tank
-		TankHandler.initAll(ctx.channel(), ACTIVE_TANKS.values());
+			// initialize all tank
+			TankHandler.initAll(ctx.channel(), ACTIVE_TANKS.values());
+			LOG.debug("Total tanks: " + ACTIVE_TANKS.size());
 
-		// initialize own tank
-		initialiseTank(ctx.channel(), sessionId);
+			// initialize own tank
+			initialiseTank(ctx.channel(), sessionId);
+		}
 	}
 
-
 	private static synchronized void registerChannelToAuthCompany(Channel channel, String sessionId) {
-
 		synchronized (ACTIVE_CHANNELS) {
 			Set<Channel> channels = ACTIVE_CHANNELS.get("1");
 			if (channels == null) {
@@ -221,7 +216,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		}
 	}
 
-
 	private static void initialiseTank(Channel channel, String sessionId) {
 		Tank tank = ACTIVE_TANKS.get(sessionId);
 		if (tank == null) {
@@ -229,10 +223,12 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			tank.setUserId(sessionId);
 
 			ACTIVE_TANKS.put(sessionId, tank);
+		} else {
+			tank.getConnectionTimeoutHandler().setActive(true);
 		}
+
 		TankHandler.init(1, tank);
 	}
-
 
 	private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
 		// Check for closing frame
@@ -243,7 +239,8 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			channels.remove(ctx.channel());
 
 			//
-			ACTIVE_TANKS.remove(di.getSessionId());
+			// ACTIVE_TANKS.remove(di.getSessionId());
+			ACTIVE_TANKS.get(di.getSessionId()).getConnectionTimeoutHandler().setActive(false);
 			return;
 		}
 		if (frame instanceof PingWebSocketFrame) {
@@ -263,9 +260,8 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		}
 	}
 
-
 	private static void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req,
-										 FullHttpResponse res) {
+			FullHttpResponse res) {
 		// Generate an error page if response getStatus code is not OK (200).
 		if (res.getStatus().code() != 200) {
 			ByteBuf buf = Unpooled.copiedBuffer(res.getStatus().toString(), CharsetUtil.UTF_8);
@@ -281,71 +277,58 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		}
 	}
 
-
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		cause.printStackTrace();
 		ctx.close();
 	}
 
-
 	private static String getWebSocketLocation(FullHttpRequest req) {
 		return "ws://" + req.headers().get(HOST) + WEBSOCKET_PATH;
 	}
-
 
 	@Override
 	public void firstReadTimeout(ChannelHandlerContext ctx) {
 	}
 
-
 	@Override
 	public void readTimeout(ChannelHandlerContext ctx) {
 	}
-
 
 	@Override
 	public void firstWriteTimeout(ChannelHandlerContext ctx) {
 	}
 
-
 	@Override
 	public void writeTimeout(ChannelHandlerContext ctx) {
 	}
-
 
 	@Override
 	public void firstAllTimeout(ChannelHandlerContext ctx) {
 	}
 
-
 	@Override
 	public void allTimeout(ChannelHandlerContext ctx) {
 	}
 
-
 	@Override
 	public void authTimeout(ChannelHandlerContext ctx) {
 	}
-
 
 	@Override
 	public boolean isAuthorized() {
 		return authorized;
 	}
 
-
 	@Override
 	public void setAuthorized(boolean authorized) {
 		this.authorized = authorized;
 	}
 
-
 	@Override
 	public DeviceInfo getDeviceInfo() {
 		return di;
 	}
-
 
 	@Override
 	public void setDeviceInfo(DeviceInfo di) {

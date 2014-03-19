@@ -238,7 +238,6 @@ function addTank(tank) {
 
 function bindCameraToTank(uuid) {
 	var tank = TANKS_MANAGER.getTank(uuid);
-	console.log(tank.children);
 
 	camera.lookAt(tank.tower.position);
 	camera.position.set(0, 6, 8);
@@ -251,7 +250,6 @@ function bindCameraToTank(uuid) {
 
 function initTankObjects(tanks) {
 	tanks.forEach(function (tank) {
-		console.log(tank.id, tank.position);
 		scene.add(tank);
 	});
 }
@@ -336,6 +334,19 @@ function init() {
 	ATMOSPHERE_MODEL.addListener("update_tank_position", onObjectLocationChange);
 	ATMOSPHERE_MODEL.addListener("init_all_tanks", onInitAllTanks);
 	ATMOSPHERE_MODEL.addListener("init_new_tank", onInitTank);
+	ATMOSPHERE_MODEL.addListener("remove_tank", onDisconnectTank);
+}
+
+function onDisconnectTank (data){
+	console.warn("onDisconnectTank", data);
+	var tank = TANKS_MANAGER.getTank(data.userId);
+	if(!tank){
+		throw new Error("Tank not found");
+	}
+	
+	scene.remove(tank);
+	TANKS_MANAGER.remove(data.userId);
+	//TODO delete from manager
 }
 
 function onInitAllTanks(data) {
@@ -349,6 +360,8 @@ function onInitAllTanks(data) {
 	}
 
 	onConnect(tanks);
+	
+	bindCameraToTank(SESSION_ID);
 }
 
 function onInitTank(data) {
@@ -361,6 +374,7 @@ function onInitTank(data) {
 
 		scene.add(tank);
 	}
+	
 	bindCameraToTank(SESSION_ID);
 }
 
@@ -469,7 +483,6 @@ function Tank(userId, position, rotation, texture, health, forwardSpeed, backSpe
 	validateFloat(backSpeed);
 	validateFloat(rotateSpeed);
 	validateInt(tankType);
-	console.log("tankType", tankType);
 
 	var obj = TANK_MANAGER[tankType].clone();
 	obj.userId = userId;
@@ -509,6 +522,10 @@ function TankManager() {
 		validateString(userId);
 
 		return tankMap[userId];
+	};
+	
+	this.remove = function(userId){
+		delete tankMap[userId];
 	};
 }
 

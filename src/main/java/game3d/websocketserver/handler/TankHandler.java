@@ -34,6 +34,18 @@ public class TankHandler {
 	}
 
 
+	public static void remove(int roomId, Tank tank) {
+		if (roomId < 1) {
+			throw new IllegalArgumentException("Room ID(" + roomId + ") should not be < 1");
+		}
+		if (tank == null) {
+			throw new IllegalArgumentException("Tank should not be null");
+		}
+
+		WebSocketServerHandler.writeToRoom(new Package("remove_tank", tank), roomId);
+	}
+
+
 	public static void updatePosition(int roomId, Tank tank) {
 		if (roomId < 1) {
 			throw new IllegalArgumentException("Room ID(" + roomId + ") should not be < 1");

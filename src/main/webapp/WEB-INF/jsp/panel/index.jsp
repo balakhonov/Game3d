@@ -32,7 +32,6 @@
     <script type='text/javascript' src="/resources/media/js/AssimpJSONLoader.js"></script>
 
     <!-- Libs -->
-    <script type='text/javascript' src="/resources/media/js/truxtrax.util.atmosphere.js"></script>
     <script type='text/javascript' src="/resources/media/js/util.js"></script>
     <script type='text/javascript' src="/resources/media/js/three-extensions.js"></script>
     <script type='text/javascript' src="/resources/media/js/key-listener.js"></script>
