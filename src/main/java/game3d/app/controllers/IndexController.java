@@ -1,59 +1,87 @@
 package game3d.app.controllers;
 
+import com.google.gson.Gson;
 import game3d.app.util.GlobalProperties;
-import game3d.mapping.Tank;
-import game3d.websocketserver.handler.TankHandler;
+import game3d.mapping.User;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Controller
 public class IndexController extends AbstractController {
 	private static final Logger LOG = Logger.getLogger(IndexController.class);
 
-	public IndexController() {
+	/**
+	 * Contains names of tanks objects
+	 */
+	private static final List<String> TANK_OBJ_SET = new ArrayList<>();
 
-		Thread t = new Thread(new Runnable() {
+	static {
+		TANK_OBJ_SET.add("tank-T-34-85");
+		TANK_OBJ_SET.add("tank-Tiger");
+	}
 
-			@Override
-			public void run() {
-				Random r = new Random();
-				while (true) {
-					Tank tank = new Tank(1 + "", 1000);
-					tank.setpX(r.nextFloat() * 50);
-					tank.setpZ(r.nextFloat() * 50);
+	/**
+	 * key -sessionId
+	 */
+	public static final Map<String, User> USERS_MAP = new ConcurrentHashMap<>();
+	private static int userIdGenerator = 0;
 
-					TankHandler.updatePosition(1, tank);
-					try {
-						Thread.sleep(1500);
-					} catch (InterruptedException e) {
-					}
-				}
+	@RequestMapping(value = {"/"}, method = RequestMethod.GET)
+	public ModelAndView index(HttpServletRequest request) {
+		try {
+			if (USERS_MAP.containsKey(request.getSession().getId())) {
+				LOG.info("User found");
+				return account(request.getSession().getId());
+			} else {
+				LOG.info("User not found");
+				return new ModelAndView("panel/login");
 			}
-		});
-		// t.start();
+		} catch (Exception e) {
+			LOG.error(e);
+			return getErrorPageView();
+		}
+	}
+
+	private ModelAndView account(String sessionId) {
+		User user = USERS_MAP.get(sessionId);
+
+		Map<String, Object> mapData = new HashMap<>();
+		mapData.put("SESSION_ID", sessionId);
+		mapData.put("USER", new Gson().toJson(user));
+		mapData.put("PROTOCOL", GlobalProperties.getProtocol());
+		mapData.put("PROJECT_VERSION", GlobalProperties.getProjectVersion());
+		mapData.put("TANK_OBJ_SET", new Gson().toJson(TANK_OBJ_SET));
+
+		return new ModelAndView("panel/index", mapData);
 	}
 
 
-	@RequestMapping(value = {"/"}, method = RequestMethod.GET)
-	public ModelAndView getPage(HttpServletRequest request, HttpServletResponse response) {
+	@RequestMapping(value = {"/"}, method = RequestMethod.POST)
+	public ModelAndView logIn(HttpServletRequest request) {
 		try {
-			Map<String, Object> mapData = new HashMap<String, Object>();
-			mapData.put("SESSION_ID", request.getSession().getId());
-			mapData.put("PROTOCOL", GlobalProperties.getProtocol());
-			mapData.put("PROJECT_VERSION", GlobalProperties.getProjectVersion());
+			String sessionId = request.getSession().getId();
 
-			return new ModelAndView("panel/index", mapData);
+			User user = new User();
+			user.setId(++userIdGenerator);
+			user.setName(request.getParameter("user-name"));
+			user.setActive(true);
+			user.setSessionId(sessionId);
+
+			USERS_MAP.put(sessionId, user);
+
+			return account(sessionId);
 		} catch (Exception e) {
 			LOG.error(e);
 			return getErrorPageView();
@@ -61,12 +89,43 @@ public class IndexController extends AbstractController {
 	}
 
 
-	@RequestMapping(value = {"/room-{num}"}, method = RequestMethod.GET)
-	public ModelAndView getPage(@PathVariable(value = "num") String num, HttpServletRequest request) {
+	@RequestMapping(value = {"/room"}, method = RequestMethod.POST)
+	public ModelAndView enterRoom(@RequestParam(required = true, value = "roomId") int roomId,
+								  @RequestParam(required = true, value = "tankType") int tankType,
+								  HttpServletRequest request) {
+		LOG.info("tankType: " + tankType);
+		LOG.info("roomId: " + roomId);
+
+		User user = USERS_MAP.get(request.getSession().getId());
+		if (user == null) {
+			return new ModelAndView("panel/login");
+		}
+
+		user.setCurrentRoom(roomId);
+		user.setCurrentTankType(tankType);
+
+		return enterRoom(user);
+	}
+
+
+	@RequestMapping(value = {"/room"}, method = RequestMethod.GET)
+	public ModelAndView enterRoom(HttpServletRequest request) {
+		User user = USERS_MAP.get(request.getSession().getId());
+		if (user == null) {
+			return new ModelAndView("panel/login");
+		}
+
+		return enterRoom(user);
+	}
+
+	private ModelAndView enterRoom(User user) {
 		Map<String, Object> mapData = new HashMap<String, Object>();
-		mapData.put("SESSION_ID", request.getSession().getId());
+		mapData.put("USER", new Gson().toJson(user));
+		mapData.put("SESSION_ID", user.getSessionId());
+		mapData.put("TANK_TYPE", user.getCurrentTankType());
 		mapData.put("PROTOCOL", GlobalProperties.getProtocol());
 		mapData.put("PROJECT_VERSION", GlobalProperties.getProjectVersion());
+		mapData.put("TANK_OBJ_SET", new Gson().toJson(TANK_OBJ_SET));
 
 		return new ModelAndView("panel/room", mapData);
 	}

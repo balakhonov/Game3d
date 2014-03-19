@@ -46,9 +46,13 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 	static {
 		final Random r = new Random();
 		for (int i = 0; i < 10; i++) {
+			int tankType = r.nextInt(2);
+
 			Tank t = new Tank(i + "id", 100);
 			t.setpX(-1 * r.nextInt(30));
 			t.setpZ(-1 * r.nextInt(30));
+			t.setTankType(tankType);
+			LOG.info("tankType:" + tankType);
 			WebSocketServerHandler.ACTIVE_TANKS.put(t.getUserId(), t);
 		}
 
@@ -190,7 +194,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		LOG.debug("req.getUri: " + req.getUri());
 
 		di = new DeviceInfo();
-		di.setTooken(sessionId);
+		di.setSessionId(sessionId);
 
 		registerChannelToAuthCompany(ctx.channel(), sessionId);
 
@@ -239,7 +243,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			channels.remove(ctx.channel());
 
 			//
-			ACTIVE_TANKS.remove(di.getTooken());
+			ACTIVE_TANKS.remove(di.getSessionId());
 			return;
 		}
 		if (frame instanceof PingWebSocketFrame) {

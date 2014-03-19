@@ -63,14 +63,14 @@ public class GameModel {
 					}
 				}
 
-				if(positionChange){
+				if (positionChange) {
 					startDate = currentDateTime;
 				}
 			}
 		}, 0, 10, TimeUnit.MILLISECONDS);
 	}
 
-	public static void main(String[] args) {
+	public static void main1(String[] args) {
 		TANKS.put("11", new Tank("11", 1000));
 		TANKS.put("12", new Tank("12", 1000));
 
@@ -98,7 +98,7 @@ public class GameModel {
 		if (ac == null) {
 			throw new IllegalArgumentException("ChannelActivity should not be null");
 		}
-		String userId = ac.getDeviceInfo().getTooken();
+		String userId = ac.getDeviceInfo().getSessionId();
 
 		this.tank = WebSocketServerHandler.ACTIVE_TANKS.get(userId);
 	}

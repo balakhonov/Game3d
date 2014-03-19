@@ -1,7 +1,14 @@
 if (!SESSION_ID) {
-	throw new Error("User session not found!");
+	throw new Error("SESSION_ID not found!");
+}
+if (!TANK_TYPE) {
+	throw new Error("TANK_TYPE found!");
+}
+if (!TANK_OBJ_SET) {
+	throw new Error("TANK_OBJ_SET not found!");
 }
 console.info("SESSION_ID:", SESSION_ID);
+console.info("TANK_OBJ_SET:", TANK_OBJ_SET);
 
 var w = window;
 var camera, scene, renderer;
@@ -17,6 +24,7 @@ var INTERIOR_SCALE = 1;
 var userUUID = SESSION_ID;
 var userList = [];
 var userObject;
+var TANK_MANAGER = [];
 
 var RESOURCE_MANAGER = new THREE.LoadingManager();
 RESOURCE_MANAGER.onProgress = function (item, loaded, total) {
@@ -25,10 +33,10 @@ RESOURCE_MANAGER.onProgress = function (item, loaded, total) {
 RESOURCE_MANAGER.onLoad = function (item, loaded, total) {
 	console.log("RESOURCE_MANAGER onLoad");
 
-	SOCKET_CONTROLLER.wsConnect();
+	onAllResourceLoaded();
 };
 
-var OBJ_MTL_LOADER = new THREE.OBJMTLLoader(RESOURCE_MANAGER);
+var OBJ_MTL_LOADER = new THREE.OBJMTLLoader();
 var TANKS_MANAGER = new TankManager();
 
 var MATERIAL_RED = new THREE.MeshBasicMaterial({
@@ -360,7 +368,7 @@ function createTankObject(data) {
 	var position = new THREE.Vector3(data.pX, data.pY, data.pZ);
 	var rotation = new THREE.Vector3(data.rX, data.rY, data.rZ);
 	var tank = new Tank(data.userId, position, rotation, MATERIAL_BLUE,
-		data.health, data.forwardSpeed, data.backSpeed, data.rotateSpeed);
+		data.health, data.forwardSpeed, data.backSpeed, data.rotateSpeed, data.tankType);
 	tank.id = data.id;
 	return tank;
 }
@@ -412,22 +420,26 @@ function loadObjects() {
 	mesh.receiveShadow = true;
 	scene.add(mesh);
 
-	// hz
-	loader = new THREE.ObjectLoader(RESOURCE_MANAGER);
-	loader.load(OBJECTS_PATH + '2.json', callbackLoadBullet);
+	bullet1 = new THREE.Mesh(new THREE.CubeGeometry(2, 2, 2), new THREE.MeshNormalMaterial());
 
-	// load tank
-//	OBJ_MTL_LOADER.load(OBJECTS_PATH + 'jeep1.obj', OBJECTS_PATH + 'jeep1.mtl',
-	OBJ_MTL_LOADER.load(OBJECTS_PATH + 'tank4.obj', OBJECTS_PATH + 'tank4.mtl',
-		function (object) {
-//			object.scale.set(4, 4, 4);
-			object.updateMatrix();
-			OBJ_TANK = object;
-		});
+	TANK_OBJ_SET.forEach(function (id) {
+
+		function onLoad(object) {
+			TANK_MANAGER.push(object);
+
+			if (TANK_MANAGER.length == TANK_OBJ_SET.length) {
+				OBJ_TANK = TANK_MANAGER[TANK_TYPE];
+
+				onAllResourceLoaded();
+			}
+		}
+
+		OBJ_MTL_LOADER.load(OBJECTS_PATH + id + ".obj", OBJECTS_PATH + id + ".mtl", onLoad);
+	});
 }
 
-function callbackLoadBullet(object) {
-	bullet1 = object;
+function onAllResourceLoaded() {
+	SOCKET_CONTROLLER.wsConnect();
 }
 
 function callbackLoadInterior(object) {
@@ -447,7 +459,7 @@ function render() {
 	renderer.render(scene, camera);
 }
 
-function Tank(userId, position, rotation, texture, health, forwardSpeed, backSpeed, rotateSpeed) {
+function Tank(userId, position, rotation, texture, health, forwardSpeed, backSpeed, rotateSpeed, tankType) {
 	validateString(userId);
 	validateInstance(position, THREE.Vector3);
 	validateInstance(rotation, THREE.Vector3);
@@ -456,8 +468,10 @@ function Tank(userId, position, rotation, texture, health, forwardSpeed, backSpe
 	validateFloat(forwardSpeed);
 	validateFloat(backSpeed);
 	validateFloat(rotateSpeed);
+	validateInt(tankType);
+	console.log("tankType", tankType);
 
-	var obj = OBJ_TANK.clone();
+	var obj = TANK_MANAGER[tankType].clone();
 	obj.userId = userId;
 	obj.position.set(position.x, position.y, position.z);
 	obj.rotation.set(rotation.x, rotation.y, rotation.z);

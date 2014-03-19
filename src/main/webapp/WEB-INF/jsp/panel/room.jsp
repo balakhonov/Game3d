@@ -1,3 +1,6 @@
+<%--@elvariable id="TANK_TYPE" type="java.lang.Integer"--%>
+<%--@elvariable id="USER" type="game3d.mapping.User"--%>
+<%--@elvariable id="TANK_OBJ_SET" type="java.util.Set"--%>
 <%--@elvariable id="SESSION_ID" type="java.lang.String"--%>
 <%--@elvariable id="ROOM_ID" type="java.lang.Integer"--%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
@@ -10,6 +13,9 @@
     <script type="text/javascript">
         var ROOM_ID = "${ROOM_ID}";
         var SESSION_ID = "${SESSION_ID}";
+        var TANK_OBJ_SET = ${TANK_OBJ_SET};
+        var USER = ${USER};
+        var TANK_TYPE = "${TANK_TYPE}";
     </script>
 
     <!-- JQuery -->

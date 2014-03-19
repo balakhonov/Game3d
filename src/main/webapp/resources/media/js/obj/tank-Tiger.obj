@@ -1,6 +1,6 @@
 # Blender v2.66 (sub 1) OBJ File: 'Tiger_I.blend'
 # www.blender.org
-mtllib tank4.mtl
+mtllib tank-Tiger.mtl
 o Gun_tower
 v -0.183345 3.031453 0.623374
 v -0.201861 3.031059 0.615173
