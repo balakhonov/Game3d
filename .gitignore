@@ -1,3 +1,7 @@
 /target
 .idea/
 game3d.iml
+/out
+/.classpath
+/.project
+/.settings
