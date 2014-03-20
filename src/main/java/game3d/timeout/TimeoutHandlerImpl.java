@@ -1,18 +1,25 @@
-package game3d;
+package game3d.timeout;
 
 import java.util.Date;
 
 
-public class ConnectionTimeoutHandler {
-	private boolean active = true;
-	private boolean disconnected = false;
+public class TimeoutHandlerImpl implements TimeoutHandler {
 
-	private long timeout = 5000;
+	private boolean active;
+	private boolean disconnected;
+
+	private long timeout;
 	private long lastActive;
-	private ConnectionTimeOut ct;
+	private TimeoutAdapter ct;
 
-	public ConnectionTimeoutHandler(ConnectionTimeOut ct) {
+	public TimeoutHandlerImpl(TimeoutAdapter ct) {
+		this(DEFAULT_CONNECTION_TIMEOUT, ct);
+	}
+
+	public TimeoutHandlerImpl(long timeout, TimeoutAdapter ct) {
+		this.timeout = timeout;
 		this.ct = ct;
+		this.active = true;
 		this.lastActive = new Date().getTime();
 	}
 
@@ -21,7 +28,7 @@ public class ConnectionTimeoutHandler {
 			if (!active) {
 				long currentTime = new Date().getTime();
 				if (currentTime - lastActive >= timeout) {
-					ct.onConnectionTimeout();
+					ct.onExpired();
 					disconnected = true;
 				}
 			} else {
@@ -36,6 +43,10 @@ public class ConnectionTimeoutHandler {
 
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+
+	public void activate() {
+		this.active = true;
 		this.disconnected = false;
 	}
 }

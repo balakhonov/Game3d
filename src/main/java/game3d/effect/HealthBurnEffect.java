@@ -24,7 +24,7 @@ public class HealthBurnEffect extends DelayAction {
 	}
 
 	@Override
-	public void delayAction() {
+	public void action() {
 		health.setHealth(health.getHealth() - damage);
 		System.out.println("HealthBurnEffect: " + health.getHealth());
 	}

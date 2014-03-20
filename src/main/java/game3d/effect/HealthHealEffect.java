@@ -24,7 +24,7 @@ public class HealthHealEffect extends DelayAction {
 	}
 
 	@Override
-	public void delayAction() {
+	public void action() {
 		health.setHealth(health.getHealth() + points);
 		System.out.println("HealthHealEffect: " + health.getHealth());
 	}

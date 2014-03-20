@@ -3,9 +3,17 @@ package game3d.effect;
 import java.util.Date;
 
 
-public abstract class DelayAction extends Action {
+public abstract class DelayAction extends ActionImpl {
 	private int period;
 	private int index = 0;
+
+	/**
+	 * 
+	 * @param period
+	 */
+	public DelayAction(int period) {
+		this(0, period);
+	}
 
 	/**
 	 * 
@@ -19,15 +27,20 @@ public abstract class DelayAction extends Action {
 		this.period = period * 1000;
 	}
 
-	public abstract void delayAction();
+	public abstract void action();
 
 	@Override
-	public final void action() {
+	public final void onAction() {
 		long currentTime = new Date().getTime();
 		long step = (currentTime - getStartDate()) / period;
 		if (index < step) {
-			delayAction();
+			action();
 			++index;
 		}
+	}
+
+	@Override
+	public void onExpired() {
+		// TODO Auto-generated method stub
 	}
 }

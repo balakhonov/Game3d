@@ -1,5 +1,6 @@
 package game3d.websocketserver.handler;
 
+import game3d.Room;
 import game3d.mapping.Tank;
 import game3d.websocketserver.Package;
 import game3d.websocketserver.WebSocketServerHandler;
@@ -21,34 +22,31 @@ public class TankHandler {
 		WebSocketServerHandler.channelWrite(channel, new Package("init_all_tanks", tank));
 	}
 
-
-	public static void init(int roomId, Tank tank) {
-		if (roomId < 1) {
-			throw new IllegalArgumentException("Room ID(" + roomId + ") should not be < 1");
+	public static void init(Room room, Tank tank) {
+		if (room == null) {
+			throw new IllegalArgumentException("Room should not be null");
 		}
 		if (tank == null) {
 			throw new IllegalArgumentException("Tank should not be null");
 		}
 
-		WebSocketServerHandler.writeToRoom(new Package("init_new_tank", tank), roomId);
+		WebSocketServerHandler.writeToRoom(new Package("init_new_tank", tank), room);
 	}
 
-
-	public static void remove(int roomId, Tank tank) {
-		if (roomId < 1) {
-			throw new IllegalArgumentException("Room ID(" + roomId + ") should not be < 1");
+	public static void remove(Room room, Tank tank) {
+		if (room == null) {
+			throw new IllegalArgumentException("Room should not be null");
 		}
 		if (tank == null) {
 			throw new IllegalArgumentException("Tank should not be null");
 		}
 
-		WebSocketServerHandler.writeToRoom(new Package("remove_tank", tank), roomId);
+		WebSocketServerHandler.writeToRoom(new Package("remove_tank", tank), room);
 	}
 
-
-	public static void updatePosition(int roomId, Tank tank) {
-		if (roomId < 1) {
-			throw new IllegalArgumentException("Room ID(" + roomId + ") should not be < 1");
+	public static void updatePosition(Room room, Tank tank) {
+		if (room == null) {
+			throw new IllegalArgumentException("Room should not be null");
 		}
 		if (tank == null) {
 			throw new IllegalArgumentException("Tank should not be null");
@@ -60,13 +58,12 @@ public class TankHandler {
 		map.put("y", tank.getpY());
 		map.put("z", tank.getpZ());
 
-		WebSocketServerHandler.writeToRoom(new Package("update_tank_position", map), roomId);
+		WebSocketServerHandler.writeToRoom(new Package("update_tank_position", map), room);
 	}
 
-
-	public static void updateRotation(int roomId, Tank tank) {
-		if (roomId < 1) {
-			throw new IllegalArgumentException("Room ID(" + roomId + ") should not be < 1");
+	public static void updateRotation(Room room, Tank tank) {
+		if (room == null) {
+			throw new IllegalArgumentException("Room should not be null");
 		}
 		if (tank == null) {
 			throw new IllegalArgumentException("Tank should not be null");
@@ -78,6 +75,6 @@ public class TankHandler {
 		map.put("y", tank.getrY());
 		map.put("z", tank.getrZ());
 
-		WebSocketServerHandler.writeToRoom(new Package("update_tank_rotation", map), roomId);
+		WebSocketServerHandler.writeToRoom(new Package("update_tank_rotation", map), room);
 	}
 }

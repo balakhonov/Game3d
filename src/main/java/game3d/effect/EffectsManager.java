@@ -5,10 +5,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class EffectsManager {
 
-	private final Map<String, List<Action>> EFFECTS = new ConcurrentHashMap<>();
+	private final Map<String, List<ActionImpl>> EFFECTS = new ConcurrentHashMap<>();
 
-	public void addEffect(String objectId, Action effect) {
-		List<Action> list = EFFECTS.get(objectId);
+	public void addEffect(String objectId, ActionImpl effect) {
+		List<ActionImpl> list = EFFECTS.get(objectId);
 		if (list == null) {
 			list = new LinkedList<>();
 		}
@@ -17,8 +17,8 @@ public class EffectsManager {
 		EFFECTS.put(objectId, list);
 	}
 
-	public void remove(String objectId, Action effect) {
-		List<Action> list = EFFECTS.get(objectId);
+	public void remove(String objectId, ActionImpl effect) {
+		List<ActionImpl> list = EFFECTS.get(objectId);
 		if (list == null) {
 			list = new LinkedList<>();
 		} else {
@@ -37,13 +37,13 @@ public class EffectsManager {
 
 		@Override
 		public void run() {
-			for (Map.Entry<String, List<Action>> me : effectsManager.EFFECTS.entrySet()) {
+			for (Map.Entry<String, List<ActionImpl>> me : effectsManager.EFFECTS.entrySet()) {
 				String objectId = me.getKey();
-				List<Action> effects = me.getValue();
-				for (Action e : effects) {
+				List<ActionImpl> effects = me.getValue();
+				for (ActionImpl e : effects) {
 					e.run();
 				}
-				Iterator<Action> iter = effects.iterator();
+				Iterator<ActionImpl> iter = effects.iterator();
 				while (iter.hasNext()) {
 					if (iter.next().isStopped()) {
 						System.out.println("delete effect: " + effects + " from:" + objectId);

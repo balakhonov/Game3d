@@ -1,37 +1,49 @@
 package game3d.websocketserver;
 
+import static io.netty.handler.codec.http.HttpHeaders.isKeepAlive;
+import static io.netty.handler.codec.http.HttpHeaders.setContentLength;
+import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
+import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import game3d.Room;
+import game3d.RoomFactory;
 import game3d.app.controllers.IndexController;
 import game3d.mapping.Tank;
+import game3d.mapping.User;
 import game3d.socketserver.DevicePackageProcessor;
 import game3d.socketserver.model.DeviceSocketChannel;
-import game3d.websocketserver.handler.TankHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
+import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import io.netty.handler.mapping.RequestPackageWrapper;
 import io.netty.handler.mapping.ResponsePackageData;
 import io.netty.handler.timeout.IdleTimeoutListener;
 import io.netty.handler.timeout.auth.AtuhTimeoutListener;
 import io.netty.util.CharsetUtil;
 
+import java.util.Iterator;
+import java.util.Random;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Required;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
-import static io.netty.handler.codec.http.HttpHeaders.isKeepAlive;
-import static io.netty.handler.codec.http.HttpHeaders.setContentLength;
-import static io.netty.handler.codec.http.HttpMethod.GET;
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 
 /**
@@ -42,19 +54,29 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 	private static final Logger LOG = Logger.getLogger(WebSocketServerHandler.class);
 
 	private final static ObjectMapper mapper = new ObjectMapper();
-	private static final Map<String, Set<Channel>> ACTIVE_CHANNELS = new ConcurrentHashMap<>();
-	public static final Map<String, Tank> ACTIVE_TANKS = new ConcurrentHashMap<>();
+	// public static final Map<String, Tank> ACTIVE_TANKS = new
+	// ConcurrentHashMap<>();
 
 	static {
+		final int ROOM_ID = 1;
+		final Room room = RoomFactory.getRoom(ROOM_ID);
+
 		final Random r = new Random();
 		for (int i = 0; i < 10; i++) {
+			String userId = i + "id";
 			int tankType = r.nextInt(2);
 
-			Tank t = new Tank(i + "id", 100);
+			Tank t = new Tank(userId, 100);
 			t.setpX(-1 * r.nextInt(30));
 			t.setpZ(-1 * r.nextInt(30));
 			t.setTankType(tankType);
-			WebSocketServerHandler.ACTIVE_TANKS.put(t.getUserId(), t);
+
+			User user = new User();
+			user.setCurrentRoom(ROOM_ID);
+			user.setActive(true);
+			user.setCurrentTank(t);
+
+			room.addUser(user, null);
 		}
 
 		new Thread(new Runnable() {
@@ -62,7 +84,10 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			public void run() {
 				while (true) {
 					for (int i = 0; i < 10; i++) {
-						Tank t = WebSocketServerHandler.ACTIVE_TANKS.get(i + "id");
+						String userId = i + "id";
+						User user = room.getUsers().get(userId);
+
+						Tank t = user.getCurrentTank();
 						t.setMoveForwardFlag(false);
 						t.setMoveBackFlag(false);
 						t.setTurnLeftFlag(false);
@@ -120,6 +145,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
 	@Override
 	public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+		LOG.debug("channelRead0:" + ctx + " " + msg);
 		if (msg instanceof FullHttpRequest) {
 			handleHttpRequest(ctx, (FullHttpRequest) msg);
 		} else if (msg instanceof WebSocketFrame) {
@@ -135,17 +161,15 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		ctx.flush();
 	}
 
-	public static void writeToRoom(Package pack, int companyId) {
-		Set<Channel> channels = ACTIVE_CHANNELS.get("1");
+	public static void writeToRoom(Package pack, Room room) {
+		Set<Channel> channels = room.getChannels();
 
-		synchronized (ACTIVE_CHANNELS) {
-			if (channels != null) {
-				Iterator<Channel> iter = channels.iterator();
-				while (iter.hasNext()) {
-					channelWrite(iter.next(), pack);
-				}
-			}
+		// synchronized (channels) {
+		Iterator<Channel> iter = channels.iterator();
+		while (iter.hasNext()) {
+			channelWrite(iter.next(), pack);
 		}
+		// }
 	}
 
 	public static void channelWrite(Channel channel, Package pack) {
@@ -159,9 +183,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 	}
 
 	private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) throws Exception {
-		// LOG.debug("ChannelHandlerContext: " + ctx + " FullHttpRequest" +
-		// req);
-
 		// Handle a bad request.
 		if (!req.getDecoderResult().isSuccess()) {
 			sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST));
@@ -178,6 +199,8 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 		LOG.debug("sessionId: " + sessionId);
 
 		if (IndexController.USERS_MAP.containsKey(sessionId)) {
+			User user = IndexController.USERS_MAP.get(sessionId);
+
 			// Handshake
 			WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
 					getWebSocketLocation(req), null, false);
@@ -192,55 +215,25 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			di = new DeviceInfo();
 			di.setSessionId(sessionId);
 
-			registerChannelToAuthCompany(ctx.channel(), sessionId);
-
-			// initialize all tank
-			TankHandler.initAll(ctx.channel(), ACTIVE_TANKS.values());
-			LOG.debug("Total tanks: " + ACTIVE_TANKS.size());
-
-			// initialize own tank
-			initialiseTank(ctx.channel(), sessionId);
+			// add user to room
+			Room room = RoomFactory.getRoom(user.getCurrentRoom());
+			room.addUser(user, ctx.channel());
 		}
-	}
-
-	private static synchronized void registerChannelToAuthCompany(Channel channel, String sessionId) {
-		synchronized (ACTIVE_CHANNELS) {
-			Set<Channel> channels = ACTIVE_CHANNELS.get("1");
-			if (channels == null) {
-				channels = new HashSet<Channel>();
-			}
-			// TODO Check max open channels by user Authentication
-
-			channels.add(channel);
-			ACTIVE_CHANNELS.put("1", channels);
-		}
-	}
-
-	private static void initialiseTank(Channel channel, String sessionId) {
-		Tank tank = ACTIVE_TANKS.get(sessionId);
-		if (tank == null) {
-			tank = new Tank(sessionId, 1000);
-			tank.setUserId(sessionId);
-
-			ACTIVE_TANKS.put(sessionId, tank);
-		} else {
-			tank.getConnectionTimeoutHandler().setActive(true);
-		}
-
-		TankHandler.init(1, tank);
 	}
 
 	private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
 		// Check for closing frame
 		if (frame instanceof CloseWebSocketFrame) {
+			// close channel
 			handshaker.close(ctx.channel(), (CloseWebSocketFrame) frame.retain());
-			//
-			Set<Channel> channels = ACTIVE_CHANNELS.get("1");
-			channels.remove(ctx.channel());
 
-			//
-			// ACTIVE_TANKS.remove(di.getSessionId());
-			ACTIVE_TANKS.get(di.getSessionId()).getConnectionTimeoutHandler().setActive(false);
+			// FIXME remove user from room
+			User user = IndexController.USERS_MAP.get(di.getSessionId());
+			user.getCurrentTank().setConnected(false);
+
+			Room room = RoomFactory.getRoom(user.getCurrentRoom());
+			room.removeUser(user.getSessionId(), ctx.channel());
+
 			return;
 		}
 		if (frame instanceof PingWebSocketFrame) {

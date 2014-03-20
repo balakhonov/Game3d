@@ -1,26 +1,26 @@
 package game3d.mapping;
 
 import game3d.Animate3d;
-import game3d.ConnectionTimeOut;
-import game3d.ConnectionTimeoutHandler;
-import game3d.websocketserver.handler.TankHandler;
+import game3d.timeout.Connection;
 
 import java.io.Serializable;
 
 
-public class Tank extends Animate3d implements Health, ConnectionTimeOut, Serializable {
+public class Tank extends Animate3d implements Health, Connection, Serializable {
+	private static final long serialVersionUID = -4960448845412350167L;
+
 	private String userId;
 	private int tankType;
 	private String objName;
 	private double health;
 
-	private ConnectionTimeoutHandler cth;
+	// private TimeoutHandler cth;
+	private boolean connected;
 
 	public Tank(String userId, double health) {
 		this.userId = userId;
 		this.health = health;
-
-		cth = new ConnectionTimeoutHandler(this);
+		this.connected = true;
 	}
 
 	@Override
@@ -57,20 +57,30 @@ public class Tank extends Animate3d implements Health, ConnectionTimeOut, Serial
 		this.tankType = tankType;
 	}
 
-	@Override
-	public void onConnectionTimeout() {
-		System.err.println("Connection timeout");
+	// @Override
+	// public void onExpired() {
+	// System.err.println("Connection timeout");
+	//
+	// TankHandler.remove(1, this);
+	// }
+	//
+	// @Override
+	// public TimeoutHandler getTimeoutHandler() {
+	// return cth;
+	// }
+	//
+	// @Override
+	// public void setTimeoutHandler(TimeoutHandler cth) {
+	// this.cth = cth;
+	// }
 
-		TankHandler.remove(1, this);
+	@Override
+	public boolean isConnected() {
+		return connected;
 	}
 
 	@Override
-	public ConnectionTimeoutHandler getConnectionTimeoutHandler() {
-		return cth;
-	}
-
-	@Override
-	public void setConnectionTimeoutHandler(ConnectionTimeoutHandler cth) {
-		this.cth = cth;
+	public void setConnected(boolean connected) {
+		this.connected = connected;
 	}
 }
