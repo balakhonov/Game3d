@@ -2,12 +2,17 @@ package game3d.effect;
 
 import java.util.Date;
 
-public abstract class Effect implements Runnable {
+
+public abstract class Action implements Runnable {
 	private long startDate;
 	private long endDate;
 	private boolean stopped;
 
-	public Effect(long duration) {
+	/**
+	 * 
+	 * @param duration
+	 */
+	public Action(long duration) {
 		if (duration < 0) {
 			throw new IllegalStateException("duration should be > 0");
 		}
@@ -16,17 +21,7 @@ public abstract class Effect implements Runnable {
 		this.endDate = startDate + duration;
 	}
 
-	protected abstract void action();
-
-	@Override
-	public void run() {
-		if (new Date().getTime() >= endDate) {
-			stopped = true;
-		}
-		action();
-	}
-
-	public Effect(long startDate, long endDate) {
+	public Action(long startDate, long endDate) {
 		if (startDate < 0) {
 			throw new IllegalStateException("startDate should be > 0");
 		}
@@ -36,6 +31,21 @@ public abstract class Effect implements Runnable {
 
 		this.endDate = endDate;
 		this.startDate = startDate;
+	}
+
+	protected abstract void action();
+
+	@Override
+	public void run() {
+		if (stopped) {
+			return;
+		}
+
+		if (new Date().getTime() >= endDate) {
+			stopped = true;
+		} else {
+			action();
+		}
 	}
 
 	public long getStartDate() {

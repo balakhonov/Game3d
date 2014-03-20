@@ -2,12 +2,9 @@ package game3d.effect;
 
 import game3d.mapping.Health;
 
-import java.util.Date;
 
-public class HealthHealEffect extends Effect {
+public class HealthHealEffect extends DelayAction {
 	private String name = "HealthHealEffect";
-	private int period;
-	private int index = 0;
 
 	private Health health;
 	private float points;
@@ -21,22 +18,15 @@ public class HealthHealEffect extends Effect {
 	 *            - seconds
 	 */
 	public HealthHealEffect(Health health, float points, long duration, int period) {
-		super(duration);
-		this.period = period * 1000;
+		super(duration, period);
 		this.health = health;
 		this.points = points;
 	}
 
 	@Override
-	public void action() {
-		long currentTime = new Date().getTime();
-		long step = (currentTime - getStartDate()) / period;
-		if (index < step) {
-			health.setHealth(health.getHealth() + points);
-			System.out.println("HealthHealEffect: " + health.getHealth());
-
-			++index;
-		}
+	public void delayAction() {
+		health.setHealth(health.getHealth() + points);
+		System.out.println("HealthHealEffect: " + health.getHealth());
 	}
 
 	public String getName() {
@@ -49,7 +39,7 @@ public class HealthHealEffect extends Effect {
 
 	@Override
 	public String toString() {
-		return "HealthBurnEffect [name=" + name + ", period=" + period + "]";
+		return "HealthHealEffect [name=" + name + ", health=" + health + ", points=" + points + "]";
 	}
 
 }
