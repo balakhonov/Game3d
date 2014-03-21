@@ -160,3 +160,12 @@ THREE.Object3D.prototype.rotateTo = function (x, y, z, speed) {
 		}
 	}
 };
+
+THREE.Object3D.prototype.changeVisibility = function( visible, recursively ) {
+    this.visible = visible;
+    if(recursively){
+        for(var i = 0,il = this.children.length;i<il;i++){
+            this.children[i].changeVisibility(visible,recursively);
+        }
+    }
+};
