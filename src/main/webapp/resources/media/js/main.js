@@ -26,6 +26,9 @@ var userList = [];
 var userObject;
 var TANK_MANAGER = [];
 
+var backsightDown = false;
+var backsight = new THREE.Object3D();
+
 var RESOURCE_MANAGER = new THREE.LoadingManager();
 RESOURCE_MANAGER.onProgress = function(item, loaded, total) {
 	console.log(item, loaded, total);
@@ -74,18 +77,37 @@ keyHandler.addKeyUpListener([68, 39], 0, keyRightUpListener);
 keyHandler.addKeyDownListener([83, 40], 0, keyBottomDownListener);
 keyHandler.addKeyUpListener([83, 40], 0, keyBottomUpListener);
 // tower left
-keyHandler.addKeyDownListener(90, 1, keyTowerLeftDownListener);
-keyHandler.addKeyUpListener(90, 1, keyTowerLeftUpListener);
-
+keyHandler.addKeyDownListener(90, 10, keyTowerLeftDownListener);
+keyHandler.addKeyUpListener(90, 10, keyTowerLeftUpListener);
 // tower right
-keyHandler.addKeyDownListener(88, 1, keyTowerRightDownListener);
-keyHandler.addKeyUpListener(88, 1, keyTowerRightUpListener);
+keyHandler.addKeyDownListener(88, 10, keyTowerRightDownListener);
+keyHandler.addKeyUpListener(88, 10, keyTowerRightUpListener);
 
 // fire 32
 keyHandler.addKeyDownListener(32, 0, keyFireListener);
 
+// backsight
+keyHandler.addKeyDownListener(16, 0, keyBacksightDown);
+
+function keyBacksightDown() {
+	console.log("keyBacksightDown", camera.position, camera.rotation, ownTank);
+	camera.position.z = (backsightDown) ? 8 : 0;
+	camera.position.y = (backsightDown) ? 6 : 3;
+	camera.rotation.x = (backsightDown) ? -0.3 : 0;
+	ownTank.changeVisibility(backsightDown, true);
+
+	if (backsightDown) {
+		ownTank.tower.remove(backsight);
+	} else {
+		backsight = createBacksight(0.03, 0.1, 10);
+		ownTank.tower.add(backsight);
+	}
+
+	backsightDown = !backsightDown;
+}
+
 function keyTowerLeftDownListener() {
-	ownTank.tower.rotation.y += Math.PI / 120;
+	ownTank.tower.rotation.y += Math.PI / 420;
 }
 
 function keyTowerLeftUpListener() {
@@ -93,7 +115,7 @@ function keyTowerLeftUpListener() {
 }
 
 function keyTowerRightDownListener() {
-	ownTank.tower.rotation.y -= Math.PI / 120;
+	ownTank.tower.rotation.y -= Math.PI / 420;
 }
 
 function keyTowerRightUpListener() {
@@ -145,11 +167,15 @@ function keyFireListener() {
 	var endX = signX * Math.abs(distance * rotCos) + ownTank.position.x;
 	var endZ = signZ * Math.abs(distance * rotSin) + ownTank.position.z;
 
+	var startX = -5 * (signX * Math.abs(rotCos));
+	var startZ = -5 * (signZ * Math.abs(rotSin));
+
+	var scale = 0.1;
 	var bullet = bullet1.clone();
 	bullet.name = "bullet";
-	bullet.scale.set(0.02, 0.02, 0.02);
+	bullet.scale.set(scale, scale, scale);
 	bullet.position.copy(ownTank.position);
-	bullet.position.sub(new THREE.Vector3(1 * rotCos, -0.5, 1 * rotSin));
+	bullet.position.sub(new THREE.Vector3(startX, -1.8, startZ));
 
 	// var ray = new THREE.Raycaster(bullet.position, direction);
 
@@ -169,6 +195,8 @@ function keyFireListener() {
 	var stepZ = Math.abs(bullet.position.z - endZ) / distance * step;
 	animateBullet(bullet, endX, endZ, stepX, stepZ, 10,
 			(bullet.position.x < endX), (bullet.position.z < endZ), direction);
+
+	animateBacksight(5, 1, (5 > 1));
 }
 
 function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2,
@@ -219,6 +247,55 @@ function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2,
 			scene.remove(bullet);
 		}
 	}, timeout);
+}
+
+function createBacksight(offset1, offset2, num) {
+	var material = new THREE.LineBasicMaterial({
+		color: 0x001100
+	});
+
+	var backsight = new THREE.Object3D();
+	backsight.position.set(camera.position.x, camera.position.y - 0.05,
+			camera.position.z - 2);
+
+	var step = 2 * Math.PI / num;
+	for ( var i = 0; i < num; i++) {
+		var x1 = Math.cos(i * step) * offset1;
+		var x2 = Math.cos(i * step) * offset2;
+		var y1 = Math.sin(i * step) * offset1;
+		var y2 = Math.sin(i * step) * offset2;
+
+		var geometry = new THREE.Geometry();
+		geometry.vertices.push(new THREE.Vector3(x1, y1, 0));
+		geometry.vertices.push(new THREE.Vector3(x2, y2, 0));
+
+		var line = new THREE.Line(geometry, material);
+		line.scale.x = line.scale.y = line.scale.z = 1;
+
+		backsight.add(line);
+	}
+
+	return backsight;
+}
+
+function animateBacksight(start, end, inc) {
+	clearTimeout(this.timer);
+	if(!backsightDown){
+		return;
+	}
+
+	ownTank.tower.remove(backsight);
+	
+	backsight = createBacksight(start * 0.03, start * 0.1, 10);
+	ownTank.tower.add(backsight);
+
+	if ((start > end) == inc) {
+		start += (inc) ? -0.1 : 0.1;
+
+		this.timer = setTimeout(function() {
+			animateBacksight(start, end, inc);
+		}, 10);
+	}
 }
 
 function onConnect(tanks) {
@@ -302,8 +379,8 @@ function init() {
 	scene.fog = new THREE.Fog(0xcce0ff, 0.1, 150);
 
 	// camera
-	camera = new THREE.PerspectiveCamera(50, 1.1 * window.innerWidth
-			/ window.innerHeight, 2, 10000);
+	camera = new THREE.PerspectiveCamera(50, window.innerWidth
+			/ window.innerHeight, 1, 10000);
 	// camera.position.set(0, 8, 8);
 	camera.rotation.z = 0;
 	camera.rotation.x = -Math.PI / 5;
