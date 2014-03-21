@@ -33,7 +33,7 @@ public class Tank extends Animate3d implements Health, Connection, Serializable 
 		return health;
 	}
 
-	public String getUserId() {
+	public String getSessionId() {
 		return userId;
 	}
 

@@ -1,39 +1,54 @@
 package game3d.timeout;
 
-import java.util.Date;
-
+import game3d.Room;
 import game3d.effect.DelayAction;
 
+import java.util.Date;
 
-public class ConectionTimeoutAction extends DelayAction {
-	private Connection connection;
-	private int timeout;
 
-	public ConectionTimeoutAction(Connection connection, int timeout) {
-		this(connection, timeout, 1000);
-	}
+public abstract class ConectionTimeoutAction extends DelayAction {
 
-	public ConectionTimeoutAction(Connection connection, int timeout, int period) {
-		super(period);
+	/**
+	 * Delay between timeout checking in seconds
+	 */
+	private static final int DEFAULT_CHECK_DELAY = 1;
+
+	protected final Room room;
+	protected final Connection connection;
+	protected final int timeout;
+
+	public ConectionTimeoutAction(Connection connection, Room room, int timeout) {
+		super(DEFAULT_CHECK_DELAY);
 
 		if (connection == null) {
-			throw new IllegalArgumentException("connection should not be null");
+			throw new IllegalArgumentException("Connection should not be null");
+		}
+		if (room == null) {
+			throw new IllegalArgumentException("Room should not be null");
+		}
+		if (timeout < 0) {
+			throw new IllegalArgumentException("Timeout should not be < 0");
 		}
 
 		this.connection = connection;
+		this.room = room;
 		this.timeout = timeout;
+
+		connection.setConnected(true);
 	}
 
+	public abstract void onTimeout();
+
 	@Override
-	public void action() {
+	public final void action() {
 		long currentTime = new Date().getTime();
 		if (connection.isConnected()) {
 			setEndDate(currentTime);
 		} else {
 			if (currentTime - getEndDate() >= timeout) {
-				System.err.println("timeout");
+				onTimeout();
+				setStopped(true);
 			}
 		}
 	}
-
 }

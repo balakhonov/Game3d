@@ -53,7 +53,7 @@ public class TankHandler {
 		}
 
 		Map<String, Serializable> map = new HashMap<String, Serializable>();
-		map.put("userId", tank.getUserId());
+		map.put("userId", tank.getSessionId());
 		map.put("x", tank.getpX());
 		map.put("y", tank.getpY());
 		map.put("z", tank.getpZ());
@@ -70,7 +70,7 @@ public class TankHandler {
 		}
 
 		Map<String, Serializable> map = new HashMap<String, Serializable>();
-		map.put("userId", tank.getUserId());
+		map.put("userId", tank.getSessionId());
 		map.put("x", tank.getrX());
 		map.put("y", tank.getrY());
 		map.put("z", tank.getrZ());

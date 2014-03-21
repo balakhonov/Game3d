@@ -54,8 +54,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 	private static final Logger LOG = Logger.getLogger(WebSocketServerHandler.class);
 
 	private final static ObjectMapper mapper = new ObjectMapper();
-	// public static final Map<String, Tank> ACTIVE_TANKS = new
-	// ConcurrentHashMap<>();
 
 	static {
 		final int ROOM_ID = 1;
@@ -63,20 +61,21 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
 		final Random r = new Random();
 		for (int i = 0; i < 10; i++) {
-			String userId = i + "id";
+			String sessionId = i + "id";
 			int tankType = r.nextInt(2);
 
-			Tank t = new Tank(userId, 100);
+			Tank t = new Tank(sessionId, 100);
 			t.setpX(-1 * r.nextInt(30));
 			t.setpZ(-1 * r.nextInt(30));
 			t.setTankType(tankType);
 
 			User user = new User();
+			user.setSessionId(sessionId);
 			user.setCurrentRoom(ROOM_ID);
 			user.setActive(true);
 			user.setCurrentTank(t);
 
-			room.addUser(user, null);
+			room.addUser(user);
 		}
 
 		new Thread(new Runnable() {
@@ -217,7 +216,8 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
 			// add user to room
 			Room room = RoomFactory.getRoom(user.getCurrentRoom());
-			room.addUser(user, ctx.channel());
+			room.addUser(user);
+			room.addChannel(ctx.channel());
 		}
 	}
 
@@ -232,7 +232,8 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			user.getCurrentTank().setConnected(false);
 
 			Room room = RoomFactory.getRoom(user.getCurrentRoom());
-			room.removeUser(user.getSessionId(), ctx.channel());
+			// room.removeUser(user.getSessionId());
+			room.removeChannel(ctx.channel());
 
 			return;
 		}

@@ -3,11 +3,12 @@ package game3d.effect;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 public class EffectsManager {
 
-	private final Map<String, List<ActionImpl>> EFFECTS = new ConcurrentHashMap<>();
+	private final Map<Long, List<ActionImpl>> EFFECTS = new ConcurrentHashMap<>();
 
-	public void addEffect(String objectId, ActionImpl effect) {
+	public void addEffect(Long objectId, ActionImpl effect) {
 		List<ActionImpl> list = EFFECTS.get(objectId);
 		if (list == null) {
 			list = new LinkedList<>();
@@ -28,8 +29,6 @@ public class EffectsManager {
 
 	static public class EffectHandler implements Runnable {
 		private EffectsManager effectsManager;
-		private long sDate = new Date().getTime();
-		static int counter = 0;
 
 		public EffectHandler(EffectsManager effectsManager) {
 			this.effectsManager = effectsManager;
@@ -37,8 +36,8 @@ public class EffectsManager {
 
 		@Override
 		public void run() {
-			for (Map.Entry<String, List<ActionImpl>> me : effectsManager.EFFECTS.entrySet()) {
-				String objectId = me.getKey();
+			for (Map.Entry<Long, List<ActionImpl>> me : effectsManager.EFFECTS.entrySet()) {
+				Long objectId = me.getKey();
 				List<ActionImpl> effects = me.getValue();
 				for (ActionImpl e : effects) {
 					e.run();
@@ -51,7 +50,6 @@ public class EffectsManager {
 					}
 				}
 			}
-			System.out.println((new Date().getTime() - sDate) + " ms " + ++counter);
 		}
 	}
 }

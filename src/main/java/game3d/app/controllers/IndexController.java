@@ -1,8 +1,13 @@
 package game3d.app.controllers;
 
 import com.google.gson.Gson;
+
+import game3d.Room;
+import game3d.RoomFactory;
 import game3d.app.util.GlobalProperties;
+import game3d.mapping.Tank;
 import game3d.mapping.User;
+
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -95,15 +101,24 @@ public class IndexController extends AbstractController {
 								  HttpServletRequest request) {
 		LOG.info("tankType: " + tankType);
 		LOG.info("roomId: " + roomId);
-
-		User user = USERS_MAP.get(request.getSession().getId());
+		String sessionId = request.getSession().getId();
+		
+		Tank tank = new Tank(sessionId, 1000);
+		tank.setTankType(tankType);
+		
+		User user = USERS_MAP.get(sessionId);
 		if (user == null) {
 			return new ModelAndView("panel/login");
 		}
 
 		user.setCurrentRoom(roomId);
 		user.setCurrentTankType(tankType);
+		user.setCurrentTank(tank);
 
+		
+		Room room = RoomFactory.getRoom(user.getCurrentRoom());
+		room.removeUser(user.getSessionId());
+		
 		return enterRoom(user);
 	}
 

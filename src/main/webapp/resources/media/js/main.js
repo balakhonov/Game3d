@@ -339,13 +339,13 @@ function init() {
 
 function onDisconnectTank (data){
 	console.warn("onDisconnectTank", data);
-	var tank = TANKS_MANAGER.getTank(data.userId);
+	var tank = TANKS_MANAGER.getTank(data.sessionId);
 	if(!tank){
 		throw new Error("Tank not found");
 	}
 	
 	scene.remove(tank);
-	TANKS_MANAGER.remove(data.userId);
+	TANKS_MANAGER.remove(data.sessionId);
 	//TODO delete from manager
 }
 
@@ -368,7 +368,7 @@ function onInitTank(data) {
 	console.log("onInitTank", data);
 	var tank = createTankObject(data);
 
-	var oldTank = TANKS_MANAGER.getTank(tank.userId);
+	var oldTank = TANKS_MANAGER.getTank(tank.sessionId);
 	if (!oldTank) {
 		addTank(tank);
 
@@ -381,7 +381,7 @@ function onInitTank(data) {
 function createTankObject(data) {
 	var position = new THREE.Vector3(data.pX, data.pY, data.pZ);
 	var rotation = new THREE.Vector3(data.rX, data.rY, data.rZ);
-	var tank = new Tank(data.userId, position, rotation, MATERIAL_BLUE,
+	var tank = new Tank(data.sessionId, position, rotation, MATERIAL_BLUE,
 		data.health, data.forwardSpeed, data.backSpeed, data.rotateSpeed, data.tankType);
 	tank.id = data.id;
 	return tank;
@@ -473,8 +473,8 @@ function render() {
 	renderer.render(scene, camera);
 }
 
-function Tank(userId, position, rotation, texture, health, forwardSpeed, backSpeed, rotateSpeed, tankType) {
-	validateString(userId);
+function Tank(sessionId, position, rotation, texture, health, forwardSpeed, backSpeed, rotateSpeed, tankType) {
+	validateString(sessionId);
 	validateInstance(position, THREE.Vector3);
 	validateInstance(rotation, THREE.Vector3);
 	validateInstance(texture, THREE.MeshBasicMaterial);
@@ -485,7 +485,7 @@ function Tank(userId, position, rotation, texture, health, forwardSpeed, backSpe
 	validateInt(tankType);
 
 	var obj = TANK_MANAGER[tankType].clone();
-	obj.userId = userId;
+	obj.sessionId = sessionId;
 	obj.position.set(position.x, position.y, position.z);
 	obj.rotation.set(rotation.x, rotation.y, rotation.z);
 	obj.positionLock = false;
@@ -502,8 +502,8 @@ function Tank(userId, position, rotation, texture, health, forwardSpeed, backSpe
 	obj.tower = obj.getObjectByName("Gun_tower");
 
 	obj.toString = function () {
-		return "Tank[userId:{0},position:{1},rotation:{2},texture:{3},health:{4}]"
-			.format(userId, position, rotation, texture, health);
+		return "Tank[sessionId:{0},position:{1},rotation:{2},texture:{3},health:{4}]"
+			.format(sessionId, position, rotation, texture, health);
 	};
 
 	TASK_MANAGER.addTask(obj);
@@ -516,16 +516,16 @@ function TankManager() {
 	this.addTank = function (tank) {
 		validateInstance(tank, THREE.Object3D);
 
-		tankMap[tank.userId] = tank;
+		tankMap[tank.sessionId] = tank;
 	};
-	this.getTank = function (userId) {
-		validateString(userId);
+	this.getTank = function (sessionId) {
+		validateString(sessionId);
 
-		return tankMap[userId];
+		return tankMap[sessionId];
 	};
 	
-	this.remove = function(userId){
-		delete tankMap[userId];
+	this.remove = function(sessionId){
+		delete tankMap[sessionId];
 	};
 }
 

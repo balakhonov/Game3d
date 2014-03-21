@@ -19,10 +19,9 @@ public class WebSocketServerInitializer extends ChannelInitializer<SocketChannel
 	@Autowired(required = true)
 	private ApplicationContext appContext;
 
-
 	@Override
 	public void initChannel(SocketChannel ch) throws Exception {
-		LOG.debug("Init websocket channel:" + ch);
+		LOG.debug("Init websocket channel1:" + ch);
 
 		// main channel handler
 		WebSocketServerHandler wsch = (WebSocketServerHandler) appContext
