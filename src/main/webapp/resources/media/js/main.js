@@ -27,10 +27,10 @@ var userObject;
 var TANK_MANAGER = [];
 
 var RESOURCE_MANAGER = new THREE.LoadingManager();
-RESOURCE_MANAGER.onProgress = function (item, loaded, total) {
+RESOURCE_MANAGER.onProgress = function(item, loaded, total) {
 	console.log(item, loaded, total);
 };
-RESOURCE_MANAGER.onLoad = function (item, loaded, total) {
+RESOURCE_MANAGER.onLoad = function(item, loaded, total) {
 	console.log("RESOURCE_MANAGER onLoad");
 
 	onAllResourceLoaded();
@@ -151,16 +151,16 @@ function keyFireListener() {
 	bullet.position.copy(ownTank.position);
 	bullet.position.sub(new THREE.Vector3(1 * rotCos, -0.5, 1 * rotSin));
 
-//	var ray = new THREE.Raycaster(bullet.position, direction);
+	// var ray = new THREE.Raycaster(bullet.position, direction);
 
-//	var rayIntersects = ray.intersectObjects(scene.children, true);
-//	rayIntersects.forEach(function (object) {
-//		object.object.material = MATERIAL_RED;
-//		console.log(object.object);
-//		setTimeout(function () {
-//			object.object.material = MATERIAL_GREEN;
-//		}, 100);
-//	});
+	// var rayIntersects = ray.intersectObjects(scene.children, true);
+	// rayIntersects.forEach(function (object) {
+	// object.object.material = MATERIAL_RED;
+	// console.log(object.object);
+	// setTimeout(function () {
+	// object.object.material = MATERIAL_GREEN;
+	// }, 100);
+	// });
 
 	scene.add(bullet);
 
@@ -168,11 +168,12 @@ function keyFireListener() {
 	var stepX = Math.abs(bullet.position.x - endX) / distance * step;
 	var stepZ = Math.abs(bullet.position.z - endZ) / distance * step;
 	animateBullet(bullet, endX, endZ, stepX, stepZ, 10,
-		(bullet.position.x < endX), (bullet.position.z < endZ), direction);
+			(bullet.position.x < endX), (bullet.position.z < endZ), direction);
 }
 
-function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2, direction) {
-	setTimeout(function () {
+function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2,
+		direction) {
+	setTimeout(function() {
 
 		if ((bullet.position.x <= endX) == b1) {
 			if (b1)
@@ -193,11 +194,11 @@ function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2, direct
 		if (rayIntersects[0]) {
 			var object = rayIntersects[0];
 			if (object.object.name != "bullet" && object.distance < 6) {
-//				console.log(object.object.parent.parent.health);
+				// console.log(object.object.parent.parent.health);
 				object.object.parent.parent.health -= 30;
 
 				object.object.material = MATERIAL_RED;
-				setTimeout(function () {
+				setTimeout(function() {
 					if (object.object.parent.parent.health < 0) {
 						scene.remove(object.object.parent.parent);
 					} else {
@@ -210,10 +211,10 @@ function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2, direct
 			}
 		}
 
-
 		if (((bullet.position.z <= endZ) == b2)
-			|| ((bullet.position.x <= endX) == b1)) {
-			animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2, direction);
+				|| ((bullet.position.x <= endX) == b1)) {
+			animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2,
+					direction);
 		} else {
 			scene.remove(bullet);
 		}
@@ -249,7 +250,7 @@ function bindCameraToTank(uuid) {
 }
 
 function initTankObjects(tanks) {
-	tanks.forEach(function (tank) {
+	tanks.forEach(function(tank) {
 		scene.add(tank);
 	});
 }
@@ -278,9 +279,9 @@ function addObject(uuid) {
 	console.info("addObject", uuid);
 
 	var loader = new THREE.ObjectLoader(RESOURCE_MANAGER);
-	loader.load('/resources/media/js/obj/1.json', function (object) {
+	loader.load('/resources/media/js/obj/1.json', function(object) {
 		var texture = THREE.ImageUtils
-			.loadTexture("/resources/media/js/obj/421795696.png");
+				.loadTexture("/resources/media/js/obj/421795696.png");
 		var material = new THREE.MeshLambertMaterial({
 			map: texture
 		});
@@ -302,8 +303,8 @@ function init() {
 
 	// camera
 	camera = new THREE.PerspectiveCamera(50, 1.1 * window.innerWidth
-		/ window.innerHeight, 2, 10000);
-//	camera.position.set(0, 8, 8);
+			/ window.innerHeight, 2, 10000);
+	// camera.position.set(0, 8, 8);
 	camera.rotation.z = 0;
 	camera.rotation.x = -Math.PI / 5;
 	camera.lookAt(scene.position);
@@ -319,7 +320,9 @@ function init() {
 	scene.add(light);
 
 	// render
-	renderer = new THREE.WebGLRenderer({ antialias: true });
+	renderer = new THREE.WebGLRenderer({
+		antialias: true
+	});
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.setClearColor(scene.fog.color);
 
@@ -331,22 +334,23 @@ function init() {
 	// Events
 	window.addEventListener('resize', onWindowResize, false);
 
-	ATMOSPHERE_MODEL.addListener("update_tank_position", onObjectLocationChange);
+	ATMOSPHERE_MODEL
+			.addListener("update_tank_position", onObjectLocationChange);
 	ATMOSPHERE_MODEL.addListener("init_all_tanks", onInitAllTanks);
 	ATMOSPHERE_MODEL.addListener("init_new_tank", onInitTank);
 	ATMOSPHERE_MODEL.addListener("remove_tank", onDisconnectTank);
 }
 
-function onDisconnectTank (data){
+function onDisconnectTank(data) {
 	console.warn("onDisconnectTank", data);
 	var tank = TANKS_MANAGER.getTank(data.sessionId);
-	if(!tank){
+	if (!tank) {
 		throw new Error("Tank not found");
 	}
-	
+
 	scene.remove(tank);
 	TANKS_MANAGER.remove(data.sessionId);
-	//TODO delete from manager
+	// TODO delete from manager
 }
 
 function onInitAllTanks(data) {
@@ -354,13 +358,13 @@ function onInitAllTanks(data) {
 
 	var tanks = [];
 
-	for (var i in data) {
+	for ( var i in data) {
 		var obj = data[i];
 		tanks.push(createTankObject(obj));
 	}
 
 	onConnect(tanks);
-	
+
 	bindCameraToTank(SESSION_ID);
 }
 
@@ -374,7 +378,7 @@ function onInitTank(data) {
 
 		scene.add(tank);
 	}
-	
+
 	bindCameraToTank(SESSION_ID);
 }
 
@@ -382,7 +386,8 @@ function createTankObject(data) {
 	var position = new THREE.Vector3(data.pX, data.pY, data.pZ);
 	var rotation = new THREE.Vector3(data.rX, data.rY, data.rZ);
 	var tank = new Tank(data.sessionId, position, rotation, MATERIAL_BLUE,
-		data.health, data.forwardSpeed, data.backSpeed, data.rotateSpeed, data.tankType);
+			data.health, data.forwardSpeed, data.backSpeed, data.rotateSpeed,
+			data.tankType);
 	tank.id = data.id;
 	return tank;
 }
@@ -401,7 +406,7 @@ function onObjectLocationChange(data) {
 		obj.newPosition.push(new THREE.Vector3(data.px, data.py, data.pz));
 		obj.newRotation.push(new THREE.Vector3(data.rx, data.ry, data.rz));
 	} else {
-//		console.error("Object {0} not found on scene".format(data.id));
+		// console.error("Object {0} not found on scene".format(data.id));
 	}
 }
 
@@ -414,29 +419,36 @@ function onWindowResize() {
 function loadObjects() {
 	// load interior
 	var loader = new THREE.AssimpJSONLoader(RESOURCE_MANAGER);
-//	loader.load(OBJECTS_PATH + 'interior_3ds.json', callbackLoadInterior);
+	// loader.load(OBJECTS_PATH + 'interior_3ds.json', callbackLoadInterior);
 
 	// ground
 	var initColor = new THREE.Color(0x497f13);
 	var initTexture = THREE.ImageUtils.generateDataTexture(1, 1, initColor);
 
-	var groundMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x111111, map: initTexture });
+	var groundMaterial = new THREE.MeshPhongMaterial({
+		color: 0xffffff,
+		specular: 0x111111,
+		map: initTexture
+	});
 
-	var groundTexture = THREE.ImageUtils.loadTexture(OBJECTS_PATH + "grasslight-big.jpg", undefined, function () {
+	var groundTexture = THREE.ImageUtils.loadTexture(OBJECTS_PATH
+			+ "grasslight-big.jpg", undefined, function() {
 		groundMaterial.map = groundTexture;
 	});
 	groundTexture.wrapS = groundTexture.wrapT = THREE.RepeatWrapping;
 	groundTexture.repeat.set(1600, 1600);
 	groundTexture.anisotropy = 16;
 
-	var mesh = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000), groundMaterial);
+	var mesh = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000),
+			groundMaterial);
 	mesh.rotation.x = -Math.PI / 2;
 	mesh.receiveShadow = true;
 	scene.add(mesh);
 
-	bullet1 = new THREE.Mesh(new THREE.CubeGeometry(2, 2, 2), new THREE.MeshNormalMaterial());
+	bullet1 = new THREE.Mesh(new THREE.CubeGeometry(2, 2, 2),
+			new THREE.MeshNormalMaterial());
 
-	TANK_OBJ_SET.forEach(function (id) {
+	TANK_OBJ_SET.forEach(function(id) {
 
 		function onLoad(object) {
 			TANK_MANAGER.push(object);
@@ -448,7 +460,8 @@ function loadObjects() {
 			}
 		}
 
-		OBJ_MTL_LOADER.load(OBJECTS_PATH + id + ".obj", OBJECTS_PATH + id + ".mtl", onLoad);
+		OBJ_MTL_LOADER.load(OBJECTS_PATH + id + ".obj", OBJECTS_PATH + id
+				+ ".mtl", onLoad);
 	});
 }
 
@@ -473,7 +486,8 @@ function render() {
 	renderer.render(scene, camera);
 }
 
-function Tank(sessionId, position, rotation, texture, health, forwardSpeed, backSpeed, rotateSpeed, tankType) {
+function Tank(sessionId, position, rotation, texture, health, forwardSpeed,
+		backSpeed, rotateSpeed, tankType) {
 	validateString(sessionId);
 	validateInstance(position, THREE.Vector3);
 	validateInstance(rotation, THREE.Vector3);
@@ -501,9 +515,9 @@ function Tank(sessionId, position, rotation, texture, health, forwardSpeed, back
 
 	obj.tower = obj.getObjectByName("Gun_tower");
 
-	obj.toString = function () {
+	obj.toString = function() {
 		return "Tank[sessionId:{0},position:{1},rotation:{2},texture:{3},health:{4}]"
-			.format(sessionId, position, rotation, texture, health);
+				.format(sessionId, position, rotation, texture, health);
 	};
 
 	TASK_MANAGER.addTask(obj);
@@ -513,26 +527,28 @@ function Tank(sessionId, position, rotation, texture, health, forwardSpeed, back
 function TankManager() {
 	var tankMap = [];
 
-	this.addTank = function (tank) {
+	this.addTank = function(tank) {
 		validateInstance(tank, THREE.Object3D);
 
 		tankMap[tank.sessionId] = tank;
 	};
-	this.getTank = function (sessionId) {
+	this.getTank = function(sessionId) {
 		validateString(sessionId);
 
 		return tankMap[sessionId];
 	};
-	
-	this.remove = function(sessionId){
+
+	this.remove = function(sessionId) {
 		delete tankMap[sessionId];
 	};
 }
 
 /**
- *
- * @param {THREE.Vector3} obj
- * @param {number} speed
+ * 
+ * @param {THREE.Vector3}
+ *            obj
+ * @param {number}
+ *            speed
  */
 function changePosition(obj, speed) {
 	if (obj.newPosition && !obj.positionLock) {
@@ -549,7 +565,7 @@ function changePosition(obj, speed) {
 			if (!(diffX == 0 && diffZ == 0)) {
 				var diffMax = Math.max(diffX, diffY, diffZ);
 				var count = (diffMax / speed);
-//				console.log("count", count, speed, diffMax);
+				// console.log("count", count, speed, diffMax);
 
 				var stepX = (diffX == 0) ? 0 : diffX / count;
 				var stepY = (diffY == 0) ? 0 : diffY / count;
@@ -560,8 +576,9 @@ function changePosition(obj, speed) {
 				obj.position.y += (bY) ? stepY : -stepY;
 				obj.position.z += (bZ) ? stepZ : -stepZ;
 
-				if (obj.position.x < newPosition.x != bX && obj.position.y < newPosition.y != bY
-					&& obj.position.z < newPosition.z != bZ) {
+				if (obj.position.x < newPosition.x != bX
+						&& obj.position.y < newPosition.y != bY
+						&& obj.position.z < newPosition.z != bZ) {
 					obj.position.x = newPosition.x;
 					obj.position.y = newPosition.y;
 					obj.position.z = newPosition.z;
@@ -572,9 +589,11 @@ function changePosition(obj, speed) {
 }
 
 /**
- *
- * @param {THREE.Vector3} obj
- * @param {number} speed
+ * 
+ * @param {THREE.Vector3}
+ *            obj
+ * @param {number}
+ *            speed
  */
 function changeRotation(obj, speed) {
 	if (obj.newRotation && !obj.rotationLock) {
@@ -589,7 +608,7 @@ function changeRotation(obj, speed) {
 function TaskManager() {
 	var tasks = [];
 
-	this.addTask = function (obj) {
+	this.addTask = function(obj) {
 		validateInt(obj.id);
 
 		tasks[obj.id] = obj;
@@ -598,7 +617,7 @@ function TaskManager() {
 	run();
 	function run() {
 
-		for (var i in tasks) {
+		for ( var i in tasks) {
 			var task = tasks[i];
 			changePosition(task, 1);
 			changeRotation(task, 0.1)
