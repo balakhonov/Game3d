@@ -34,10 +34,40 @@
     <script type='text/javascript' src="/resources/media/js/AssimpJSONLoader.js"></script>
 
     <!-- Libs -->
+    <script type='text/javascript' src="/resources/media/js/query-loader.js"></script>
     <script type='text/javascript' src="/resources/media/js/truxtrax.util.atmosphere.js"></script>
     <script type='text/javascript' src="/resources/media/js/util.js"></script>
     <script type='text/javascript' src="/resources/media/js/three-extensions.js"></script>
     <script type='text/javascript' src="/resources/media/js/key-listener.js"></script>
+    
+    <style type="text/css">
+    	.QOverlay {
+			background-color: #ffffff;
+			z-index: 9999999;
+		}
+	    .QLoader {
+			background-color: #cccccc;
+			height: 1px;
+		}
+		.QOverlay .logo {
+			position: absolute;
+			left: -180px;
+			top: 50%;
+			margin-top: -20px;
+			margin-left: -90px;
+			width: 180px;
+			height: 32px;
+			z-index: 1;
+			text-decoration: none;
+			color:#000;
+		}
+		.QOverlay label {
+			position: absolute;
+			top: 22px;
+			left: 5px;
+			color: #000000;
+		}
+	</style>
 </head>
 <body style="margin: 0; padding: 0;">
 <script type='text/javascript' src="/resources/media/js/main.js"></script>

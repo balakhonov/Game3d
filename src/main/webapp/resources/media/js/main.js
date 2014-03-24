@@ -29,12 +29,62 @@ var TANK_MANAGER = [];
 var backsightDown = false;
 var backsight = new THREE.Object3D();
 
-var RESOURCE_MANAGER = new THREE.LoadingManager();
-RESOURCE_MANAGER.onProgress = function(item, loaded, total) {
+var RESOURCE_MANAGER = new ResourceManager();
+
+function ResourceManager(preloader) {
+	var that = this;
+	var total = 0;
+	var count = 0;
+	var items = [];
+
+	this.start = function() {
+		QueryLoader.selectorPreload = "body";
+		QueryLoader.withLogo = true;
+		QueryLoader.init(function() {
+			for ( var i in items) {
+				var call = items[i];
+				call();
+			}
+		});
+	};
+
+	this.add = function(func) {
+		total++;
+		QueryLoader.additionDownloadsCount++;
+		items.push(func);
+	};
+
+	this.onLoaded = function(current, total) {
+		console.log("onLoaded", current, total);
+		QueryLoader.downloadDoneCallback();
+	};
+
+	this.onTotalLoaded = function() {
+		console.log("onTotalLoaded");
+
+		onAllResourceLoaded();
+	};
+
+	this.loaded = function() {
+		count++;
+		that.onLoaded(count, total);
+
+		if (count >= total) {
+			that.onTotalLoaded();
+		}
+	};
+}
+
+function Preloader(id) {
+
+}
+
+var LOADING_MANAGER = new THREE.LoadingManager();
+LOADING_MANAGER.onProgress = function(item, loaded, total) {
 	console.log(item, loaded, total);
 };
-RESOURCE_MANAGER.onLoad = function(item, loaded, total) {
-	console.log("RESOURCE_MANAGER onLoad");
+LOADING_MANAGER.onLoad = function(item, loaded, total) {
+	console.log("LOADING_MANAGER onLoad");
 
 	onAllResourceLoaded();
 };
@@ -280,12 +330,12 @@ function createBacksight(offset1, offset2, num) {
 
 function animateBacksight(start, end, inc) {
 	clearTimeout(this.timer);
-	if(!backsightDown){
+	if (!backsightDown) {
 		return;
 	}
 
 	ownTank.tower.remove(backsight);
-	
+
 	backsight = createBacksight(start * 0.03, start * 0.1, 10);
 	ownTank.tower.add(backsight);
 
@@ -355,7 +405,7 @@ function addObject(uuid) {
 	}
 	console.info("addObject", uuid);
 
-	var loader = new THREE.ObjectLoader(RESOURCE_MANAGER);
+	var loader = new THREE.ObjectLoader(LOADING_MANAGER);
 	loader.load('/resources/media/js/obj/1.json', function(object) {
 		var texture = THREE.ImageUtils
 				.loadTexture("/resources/media/js/obj/421795696.png");
@@ -404,9 +454,11 @@ function init() {
 	renderer.setClearColor(scene.fog.color);
 
 	document.body.appendChild(renderer.domElement);
+	$("canvas").hide();
 
-	// loaders
 	loadObjects();
+
+	RESOURCE_MANAGER.start();
 
 	// Events
 	window.addEventListener('resize', onWindowResize, false);
@@ -495,54 +547,69 @@ function onWindowResize() {
 
 function loadObjects() {
 	// load interior
-	var loader = new THREE.AssimpJSONLoader(RESOURCE_MANAGER);
+	var loader = new THREE.AssimpJSONLoader(LOADING_MANAGER);
 	// loader.load(OBJECTS_PATH + 'interior_3ds.json', callbackLoadInterior);
 
-	// ground
-	var initColor = new THREE.Color(0x497f13);
-	var initTexture = THREE.ImageUtils.generateDataTexture(1, 1, initColor);
+	loadInteriorResources();
 
-	var groundMaterial = new THREE.MeshPhongMaterial({
-		color: 0xffffff,
-		specular: 0x111111,
-		map: initTexture
-	});
-
-	var groundTexture = THREE.ImageUtils.loadTexture(OBJECTS_PATH
-			+ "grasslight-big.jpg", undefined, function() {
-		groundMaterial.map = groundTexture;
-	});
-	groundTexture.wrapS = groundTexture.wrapT = THREE.RepeatWrapping;
-	groundTexture.repeat.set(1600, 1600);
-	groundTexture.anisotropy = 16;
-
-	var mesh = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000),
-			groundMaterial);
-	mesh.rotation.x = -Math.PI / 2;
-	mesh.receiveShadow = true;
-	scene.add(mesh);
-
+	// load
 	bullet1 = new THREE.Mesh(new THREE.CubeGeometry(2, 2, 2),
 			new THREE.MeshNormalMaterial());
 
+	// load tanks
+	loadTankResources();
+}
+
+function loadTankResources() {
 	TANK_OBJ_SET.forEach(function(id) {
-
-		function onLoad(object) {
-			TANK_MANAGER.push(object);
-
-			if (TANK_MANAGER.length == TANK_OBJ_SET.length) {
-				OBJ_TANK = TANK_MANAGER[TANK_TYPE];
-
-				onAllResourceLoaded();
-			}
-		}
-
-		OBJ_MTL_LOADER.load(OBJECTS_PATH + id + ".obj", OBJECTS_PATH + id
-				+ ".mtl", onLoad);
+		RESOURCE_MANAGER.add(function() {
+			OBJ_MTL_LOADER.load(OBJECTS_PATH + id + ".obj", OBJECTS_PATH + id
+					+ ".mtl", callbackLoadTankResources);
+		});
 	});
 }
 
+function callbackLoadTankResources(tank) {
+	console.log("callbackLoadTankResources", tank);
+	RESOURCE_MANAGER.loaded();
+
+	TANK_MANAGER.push(tank);
+}
+
+function loadInteriorResources() {
+	RESOURCE_MANAGER.add(function() {
+		var path = OBJECTS_PATH + "grasslight-big.jpg";
+		THREE.ImageUtils.loadTexture(path, undefined,
+				callbackLoadInteriorTexture);
+	});
+}
+
+function callbackLoadInteriorTexture(texture) {
+	console.log("callbackLoadInteriorTexture", texture);
+
+	RESOURCE_MANAGER.loaded();
+
+	var material = new THREE.MeshPhongMaterial({
+		map: texture
+	});
+	texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+	texture.repeat.set(1600, 1600);
+	texture.anisotropy = 16;
+
+	var mesh = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000), material);
+	mesh.rotation.x = -Math.PI / 2;
+	mesh.receiveShadow = true;
+
+	scene.add(mesh);
+}
+
 function onAllResourceLoaded() {
+	console.log("onAllResourceLoaded");
+
+	$("canvas").show();
+
+	OBJ_TANK = TANK_MANAGER[TANK_TYPE];
+
 	SOCKET_CONTROLLER.wsConnect();
 }
 
