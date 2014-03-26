@@ -165,7 +165,9 @@ THREE.Object3D.prototype.changeVisibility = function( visible, recursively ) {
     this.visible = visible;
     if(recursively){
         for(var i = 0,il = this.children.length;i<il;i++){
-            this.children[i].changeVisibility(visible,recursively);
+        	if(!(this.children[i] instanceof THREE.PerspectiveCamera)){
+                this.children[i].changeVisibility(visible,recursively);
+        	}
         }
     }
 };

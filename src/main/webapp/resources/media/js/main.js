@@ -29,6 +29,8 @@ var TANK_MANAGER = [];
 var backsightDown = false;
 var backsight = new THREE.Object3D();
 
+var rechargeLabel = new THREE.Object3D();
+
 var RESOURCE_MANAGER = new ResourceManager();
 
 function ResourceManager(preloader) {
@@ -140,7 +142,6 @@ keyHandler.addKeyDownListener(32, 0, keyFireListener);
 keyHandler.addKeyDownListener(16, 0, keyBacksightDown);
 
 function keyBacksightDown() {
-	console.log("keyBacksightDown", camera.position, camera.rotation, ownTank);
 	camera.position.z = (backsightDown) ? 8 : 0;
 	camera.position.y = (backsightDown) ? 6 : 3;
 	camera.rotation.x = (backsightDown) ? -0.3 : 0;
@@ -207,6 +208,11 @@ function keyRightUpListener() {
 }
 
 function keyFireListener() {
+	if (!ownTank.weapon.reloaded) {
+		return;
+	}
+	ownTank.weapon.reloaded = false;
+
 	var distance = 100;
 
 	var direction = ownTank.tower.direction(ownTank);
@@ -249,6 +255,7 @@ function keyFireListener() {
 			(bullet.position.x < endX), (bullet.position.z < endZ), direction);
 
 	animateBacksight(5, 1, (5 > 1));
+	animateRecharge(1 / ownTank.weapon.shotFreq * 1000);
 }
 
 function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2,
@@ -330,6 +337,50 @@ function createBacksight(offset1, offset2, num) {
 	return backsight;
 }
 
+function createRechargeLabel(offset1, offset2, maxLines, lines) {
+	var material = new THREE.LineBasicMaterial({
+		color: (maxLines <= lines) ? 0x00ff00 : 0xff9900
+	});
+	var materialB = new THREE.LineBasicMaterial({
+		color: 0x000000
+	});
+
+	var rechargeLabel = new THREE.Object3D();
+	rechargeLabel.position.set(0, 0, -1.5);
+
+	var step = (Math.PI / maxLines / 2);
+	var angleOffset = Math.PI / 1.5;
+
+	for ( var i = maxLines - 1; i > 0; i--) {
+		if (maxLines - i > lines) {
+			break;
+		}
+
+		var x1 = Math.cos(i * step + angleOffset) * offset1;
+		var y1 = Math.sin(i * step + angleOffset) * offset1;
+		var x2 = Math.cos(i * step + angleOffset) * offset2;
+		var y2 = Math.sin(i * step + angleOffset) * offset2;
+
+		var geometry = new THREE.Geometry();
+		geometry.vertices.push(new THREE.Vector3(x1, y1, 0));
+		geometry.vertices.push(new THREE.Vector3(x2, y2, 0));
+
+		var line = new THREE.Line(geometry, material);
+		line.scale.x = line.scale.y = line.scale.z = 1;
+		rechargeLabel.add(line);
+
+		var geometry = new THREE.Geometry();
+		geometry.vertices.push(new THREE.Vector3(x1, y1 - 0.005, 0));
+		geometry.vertices.push(new THREE.Vector3(x2, y2 - 0.005, 0));
+
+		var line = new THREE.Line(geometry, materialB);
+		line.scale.x = line.scale.y = line.scale.z = 1;
+		rechargeLabel.add(line);
+	}
+
+	return rechargeLabel;
+}
+
 function animateBacksight(start, end, inc) {
 	clearTimeout(this.timer);
 	if (!backsightDown) {
@@ -376,6 +427,39 @@ function bindCameraToTank(uuid) {
 	tank.tower.add(camera);
 
 	ownTank = tank;
+}
+
+/**
+ * delay in seconds
+ */
+function animateRecharge(delay) {
+	var passedTime = 0;
+	var timer = null;
+	var timerDelay = 60;
+
+	animate();
+
+	function animate() {
+		passedTime += timerDelay;
+
+		var perc = 100 / delay * passedTime;
+		var lines = Math.round(30 / 100 * perc);
+
+		camera.remove(rechargeLabel);
+
+		rechargeLabel = createRechargeLabel(0.43, 0.45, 30, lines);
+		camera.add(rechargeLabel);
+
+		if (passedTime > delay) {
+			clearTimeout(timer);
+			passedTime = 0;
+			ownTank.weapon.reloaded = true;
+		} else {
+			timer = setTimeout(function() {
+				animate();
+			}, timerDelay);
+		}
+	}
 }
 
 function initTankObjects(tanks) {
@@ -460,6 +544,8 @@ function init() {
 
 	loadObjects();
 
+	loadLabels();
+
 	RESOURCE_MANAGER.start();
 
 	// Events
@@ -471,6 +557,14 @@ function init() {
 	ATMOSPHERE_MODEL.addListener("init_all_tanks", onInitAllTanks);
 	ATMOSPHERE_MODEL.addListener("init_new_tank", onInitTank);
 	ATMOSPHERE_MODEL.addListener("remove_tank", onDisconnectTank);
+}
+
+function loadLabels() {
+	console.log("loadLabels");
+
+	// add Recharge Label
+	rechargeLabel = createRechargeLabel(0.43, 0.45, 30, 30);
+	camera.add(rechargeLabel);
 }
 
 function onDisconnectTank(data) {
@@ -515,10 +609,12 @@ function onInitTank(data) {
 }
 
 function createTankObject(data) {
+	console.log(data);
 	var position = new THREE.Vector3(data.pX, data.pY, data.pZ);
 	var rotation = new THREE.Vector3(data.rX, data.rY, data.rZ);
 	var tank = new Tank(data.sessionId, position, rotation, MATERIAL_BLUE,
-			data.health, data.engine, data.suspension, data.tankType);
+			data.health, data.engine, data.suspension, data.tower, data.weapon,
+			data.tankType);
 	tank.id = data.id;
 	return tank;
 }
@@ -645,7 +741,7 @@ function render() {
 }
 
 function Tank(sessionId, position, rotation, texture, health, engine,
-		suspension, tankType) {
+		suspension, tower, weapon, tankType) {
 	validateString(sessionId);
 	validateInstance(position, THREE.Vector3);
 	validateInstance(rotation, THREE.Vector3);
@@ -653,7 +749,7 @@ function Tank(sessionId, position, rotation, texture, health, engine,
 	validateInt(health);
 	validateFloat(engine.forwardSpeed);
 	validateFloat(engine.backSpeed);
-	validateFloat(suspension.rotateSpeed);
+	validateFloat(weapon.shotFreq);
 	validateInt(tankType);
 
 	var obj = TANK_MANAGER[tankType].clone();
@@ -673,9 +769,14 @@ function Tank(sessionId, position, rotation, texture, health, engine,
 	obj.rotateSpeed = suspension.rotateSpeed;
 	obj.moveTimeout = 0;
 
+	obj.weapon = {};
+	obj.weapon.reloaded = true;
+	obj.weapon.shotFreq = weapon.shotFreq;
+
 	obj.tower = obj.getObjectByName("Gun_tower");
 	obj.tower.rotationLock = false;
 	obj.tower.newRotation = [];
+	obj.tower.rotation.set(0, tower.rY, 0);
 
 	obj.toString = function() {
 		return "Tank[sessionId:{0},position:{1},rotation:{2},texture:{3},health:{4}]"

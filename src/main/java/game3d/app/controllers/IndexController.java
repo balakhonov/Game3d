@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import game3d.Room;
 import game3d.RoomFactory;
 import game3d.Tower;
+import game3d.Weapon;
 import game3d.app.util.GlobalProperties;
 import game3d.mapping.AbstractTank;
 import game3d.mapping.User;
@@ -104,7 +105,8 @@ public class IndexController extends AbstractController {
 		LOG.info("roomId: " + roomId);
 		String sessionId = request.getSession().getId();
 
-		AbstractTank tank = new AbstractTank(sessionId, 1000, new Suspension(), new Engine(), new Tower());
+		AbstractTank tank = new AbstractTank(sessionId, 1000, new Suspension(), new Engine(),
+				new Weapon(), new Tower());
 		tank.setTankType(tankType);
 
 		User user = USERS_MAP.get(sessionId);

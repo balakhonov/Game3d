@@ -2,6 +2,7 @@ package game3d.mapping;
 
 import game3d.Animate3d;
 import game3d.Tower;
+import game3d.Weapon;
 import game3d.motion.Engine;
 import game3d.motion.Movable;
 import game3d.motion.Suspension;
@@ -21,19 +22,22 @@ public class AbstractTank extends Animate3d implements Health, Connection, Seria
 	private Suspension suspension;
 	private Engine engine;
 	private Tower tower;
+	private Weapon weapon;
 
 	private boolean connected;
 
-	public AbstractTank(String userId, double health, Suspension suspension, Engine engine) {
-		this(userId, health, suspension, engine, null);
+	public AbstractTank(String userId, double health, Suspension suspension, Engine engine,
+			Weapon weapon) {
+		this(userId, health, suspension, engine, weapon, null);
 	}
 
 	public AbstractTank(String userId, double health, Suspension suspension, Engine engine,
-			Tower tower) {
+			Weapon weapon, Tower tower) {
 		this.userId = userId;
 		this.health = health;
 		this.suspension = suspension;
 		this.engine = engine;
+		this.setWeapon(weapon);
 		this.tower = tower;
 
 		this.connected = true;
@@ -145,5 +149,13 @@ public class AbstractTank extends Animate3d implements Health, Connection, Seria
 	public void turnTowerRight() {
 		double step = Math.PI / tower.getRotateSpeed();
 		tower.rotateY(-step);
+	}
+
+	public Weapon getWeapon() {
+		return weapon;
+	}
+
+	public void setWeapon(Weapon weapon) {
+		this.weapon = weapon;
 	}
 }
