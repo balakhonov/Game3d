@@ -14,6 +14,8 @@ var w = window;
 var camera, scene, renderer;
 var geometry, material, mesh;
 
+var cameraIsBind = false;
+
 var ownTank;
 var OBJ_TANK;
 var bullet1;
@@ -235,16 +237,28 @@ function keyFireListener() {
 	bullet.position.copy(ownTank.position);
 	bullet.position.sub(new THREE.Vector3(startX, -1.8, startZ));
 
-	// var ray = new THREE.Raycaster(bullet.position, direction);
+	var ray = new THREE.Raycaster(bullet.position, direction);
+	var rayIntersects = ray.intersectObjects(scene.children, true);
+	rayIntersects.forEach(function(object) {
+		// object.object.material = MATERIAL_RED;
+		//
+		// setTimeout(function() {
+		// object.object.material = MATERIAL_GREEN;
+		// }, 100);
+	});
+	if (rayIntersects[0]) {
+		var object = rayIntersects[0];
+		object.object.material = MATERIAL_RED;
 
-	// var rayIntersects = ray.intersectObjects(scene.children, true);
-	// rayIntersects.forEach(function (object) {
-	// object.object.material = MATERIAL_RED;
-	// console.log(object.object);
-	// setTimeout(function () {
-	// object.object.material = MATERIAL_GREEN;
-	// }, 100);
-	// });
+		var target = findTankObjectByChield(object.object);
+		console.log(target);
+
+		SOCKET_CONTROLLER.send("fire", target.sessionId);
+
+		setTimeout(function() {
+			object.object.material = MATERIAL_GREEN;
+		}, 100);
+	}
 
 	scene.add(bullet);
 
@@ -256,6 +270,14 @@ function keyFireListener() {
 
 	animateBacksight(5, 1, (5 > 1));
 	animateRecharge(1 / ownTank.weapon.shotFreq * 1000);
+}
+
+function findTankObjectByChield(obj) {
+	if (obj.sessionId) {
+		return obj;
+	} else {
+		return findTankObjectByChield(obj.parent);
+	}
 }
 
 function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2,
@@ -275,28 +297,28 @@ function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2,
 				bullet.position.z -= stepZ;
 		}
 
-		var ray = new THREE.Raycaster(bullet.position, direction);
-
-		var rayIntersects = ray.intersectObjects(scene.children, true);
-		if (rayIntersects[0]) {
-			var object = rayIntersects[0];
-			if (object.object.name != "bullet" && object.distance < 6) {
-				// console.log(object.object.parent.parent.health);
-				object.object.parent.parent.health -= 30;
-
-				object.object.material = MATERIAL_RED;
-				setTimeout(function() {
-					if (object.object.parent.parent.health < 0) {
-						scene.remove(object.object.parent.parent);
-					} else {
-						object.object.material = MATERIAL_GREEN;
-					}
-				}, 100);
-
-				scene.remove(bullet);
-				return;
-			}
-		}
+		// var ray = new THREE.Raycaster(bullet.position, direction);
+		//
+		// var rayIntersects = ray.intersectObjects(scene.children, true);
+		// if (rayIntersects[0]) {
+		// var object = rayIntersects[0];
+		// if (object.object.name != "bullet" && object.distance < 6) {
+		// // console.log(object.object.parent.parent.health);
+		// object.object.parent.parent.health -= 30;
+		//
+		// object.object.material = MATERIAL_RED;
+		// setTimeout(function() {
+		// if (object.object.parent.parent.health < 0) {
+		// scene.remove(object.object.parent.parent);
+		// } else {
+		// object.object.material = MATERIAL_GREEN;
+		// }
+		// }, 100);
+		//
+		// scene.remove(bullet);
+		// return;
+		// }
+		// }
 
 		if (((bullet.position.z <= endZ) == b2)
 				|| ((bullet.position.x <= endX) == b1)) {
@@ -418,6 +440,9 @@ function addTank(tank) {
 }
 
 function bindCameraToTank(uuid) {
+	if (cameraIsBind)
+		return;
+
 	var tank = TANKS_MANAGER.getTank(uuid);
 
 	camera.lookAt(tank.tower.position);
@@ -427,6 +452,9 @@ function bindCameraToTank(uuid) {
 	tank.tower.add(camera);
 
 	ownTank = tank;
+	$(".health-bar .cur").html(ownTank.health);
+	$(".health-bar .max").html(ownTank.health);
+	cameraIsBind = true;
 }
 
 /**
@@ -557,6 +585,31 @@ function init() {
 	ATMOSPHERE_MODEL.addListener("init_all_tanks", onInitAllTanks);
 	ATMOSPHERE_MODEL.addListener("init_new_tank", onInitTank);
 	ATMOSPHERE_MODEL.addListener("remove_tank", onDisconnectTank);
+	ATMOSPHERE_MODEL.addListener("on_wounded", onWounded);
+	ATMOSPHERE_MODEL.addListener("on_destroyed", onDestroyed);
+}
+
+function onWounded(data) {
+	console.log("onWounded", data);
+	validateInt(data.id);
+	validateString(data.sessionId);
+	validateFloat(data.health);
+	validateFloat(data.dmg);
+
+	console.log("onWounded", data.sessionId == SESSION_ID);
+	if (data.sessionId == SESSION_ID) {
+		$(".health-bar .cur").html(data.health);
+	}
+}
+
+function onDestroyed(data) {
+	console.log("onDestroyed", data);
+	validateInt(data.id);
+	validateString(data.sessionId);
+	validateFloat(data.health);
+
+	var obj = scene.getObjectById(data.id, false);
+	scene.remove(obj);
 }
 
 function loadLabels() {
@@ -609,7 +662,6 @@ function onInitTank(data) {
 }
 
 function createTankObject(data) {
-	console.log(data);
 	var position = new THREE.Vector3(data.pX, data.pY, data.pZ);
 	var rotation = new THREE.Vector3(data.rX, data.rY, data.rZ);
 	var tank = new Tank(data.sessionId, position, rotation, MATERIAL_BLUE,
@@ -623,11 +675,13 @@ function onTowerRotate(data) {
 	validateInt(data.id);
 	validateFloat(data.ry);
 	var obj = scene.getObjectById(data.id, false);
-	var tower = obj.tower;
-	if (tower) {
-		tower.newRotation.push(new THREE.Vector3(0, data.ry, 0));
-	} else {
-		console.error("Tower not found for Object {0}".format(data.id));
+	if (obj) {
+		var tower = obj.tower;
+		if (tower) {
+			tower.newRotation.push(new THREE.Vector3(0, data.ry, 0));
+		} else {
+			console.error("Tower not found for Object {0}".format(data.id));
+		}
 	}
 }
 
@@ -645,7 +699,7 @@ function onObjectLocationChange(data) {
 		obj.newPosition.push(new THREE.Vector3(data.px, data.py, data.pz));
 		obj.newRotation.push(new THREE.Vector3(data.rx, data.ry, data.rz));
 	} else {
-		console.error("Object {0} not found on scene".format(data.id));
+		// console.error("Object {0} not found on scene".format(data.id));
 	}
 }
 

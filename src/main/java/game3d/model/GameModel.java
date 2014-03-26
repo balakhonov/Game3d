@@ -9,6 +9,7 @@ import game3d.motion.MotionController;
 import game3d.socketserver.model.DeviceRequest;
 import game3d.socketserver.model.DeviceSocketChannel;
 import game3d.websocketserver.handler.ObjectHandler;
+import game3d.websocketserver.handler.TankHandler;
 
 import org.apache.log4j.Logger;
 
@@ -97,5 +98,18 @@ public class GameModel {
 	public void rotateTowerRightUp() {
 		motionController.setTurnTowerRightFlag(false);
 		ObjectHandler.updatePosition(room, tank);
+	}
+
+	@DeviceRequest(command = "fire")
+	public void fire(String targetSessionId) {
+		double dmg = tank.getWeapon().getDamage();
+		
+		AbstractTank target = room.getTanks().get(targetSessionId);
+		target.setHealth(target.getHealth() - dmg);
+
+		TankHandler.wounded(room, target, dmg);
+		if (target.getHealth() < 0) {
+			TankHandler.destroyed(room, target);
+		}
 	}
 }

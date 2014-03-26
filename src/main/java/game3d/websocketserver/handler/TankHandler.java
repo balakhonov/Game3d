@@ -61,6 +61,39 @@ public class TankHandler {
 		WebSocketServerHandler.writeToRoom(new Package("update_tank_position", map), room);
 	}
 
+	public static void destroyed(Room room, AbstractTank tank) {
+		if (room == null) {
+			throw new IllegalArgumentException("Room should not be null");
+		}
+		if (tank == null) {
+			throw new IllegalArgumentException("Tank should not be null or empty");
+		}
+
+		Map<String, Serializable> map = new HashMap<String, Serializable>();
+		map.put("id", tank.getId());
+		map.put("sessionId", tank.getSessionId());
+		map.put("health", tank.getHealth());
+
+		WebSocketServerHandler.writeToRoom(new Package("on_destroyed", map), room);
+	}
+
+	public static void wounded(Room room, AbstractTank tank, double dmg) {
+		if (room == null) {
+			throw new IllegalArgumentException("Room should not be null");
+		}
+		if (tank == null) {
+			throw new IllegalArgumentException("Tank should not be null or empty");
+		}
+
+		Map<String, Serializable> map = new HashMap<String, Serializable>();
+		map.put("id", tank.getId());
+		map.put("sessionId", tank.getSessionId());
+		map.put("health", tank.getHealth());
+		map.put("dmg", dmg);
+
+		WebSocketServerHandler.writeToRoom(new Package("on_wounded", map), room);
+	}
+
 	public static void updateTowerRotation(Room room, AbstractTank tank) {
 		if (room == null) {
 			throw new IllegalArgumentException("Room should not be null");

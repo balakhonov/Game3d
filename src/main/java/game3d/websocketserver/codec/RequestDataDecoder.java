@@ -1,7 +1,9 @@
 package game3d.websocketserver.codec;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
@@ -26,7 +28,11 @@ public class RequestDataDecoder extends MessageToMessageDecoder<TextWebSocketFra
 		try {
 			JsonObject jsonObject = new JsonParser().parse(message).getAsJsonObject();
 			String command = jsonObject.get("type").getAsString();
-			String data = jsonObject.get("data").getAsJsonObject().toString();
+
+			JsonElement je = jsonObject.get("data");
+
+			String data = (je.isJsonObject()) ? je.getAsJsonObject().toString() : je
+					.getAsJsonPrimitive().toString();
 			RequestPackageWrapper requestData = new RequestPackageWrapper(command, data);
 			out.add(requestData);
 		} catch (Exception e) {

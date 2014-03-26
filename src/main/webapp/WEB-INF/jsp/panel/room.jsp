@@ -116,7 +116,7 @@
 <body style="margin: 0; padding: 0;">
 <div style="position:absolute; left:10px; top:10px;">
 	<ul class="top-bars">
-		<li><div class="health-bar gradient-green">100/100</div></li>
+		<li><div class="health-bar gradient-green"><span class="cur">100</span>/<span class="max">100</span></div></li>
 		<li><div class="exp-bar gradient-gray">100/100</div></li>
 	</ul>
 </div>
