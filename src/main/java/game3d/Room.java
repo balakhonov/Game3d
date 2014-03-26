@@ -1,7 +1,8 @@
 package game3d;
 
-import game3d.mapping.Tank;
+import game3d.mapping.AbstractTank;
 import game3d.mapping.User;
+import game3d.motion.MotionController;
 import io.netty.channel.Channel;
 
 import java.util.Map;
@@ -17,9 +18,11 @@ public interface Room {
 
 	public Map<String, User> getUsers();
 
-	public Map<String, Tank> getTanks();
+	public Map<String, AbstractTank> getTanks();
 
 	public Set<Channel> getChannels();
 
 	public void addChannel(Channel channel);
+	
+	public MotionController getMotionController(String sessionId);
 }

@@ -10,8 +10,11 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import game3d.Room;
 import game3d.RoomFactory;
 import game3d.app.controllers.IndexController;
-import game3d.mapping.Tank;
+import game3d.mapping.AbstractTank;
 import game3d.mapping.User;
+import game3d.motion.Engine;
+import game3d.motion.MotionController;
+import game3d.motion.Suspension;
 import game3d.socketserver.DevicePackageProcessor;
 import game3d.socketserver.model.DeviceSocketChannel;
 import io.netty.buffer.ByteBuf;
@@ -64,7 +67,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			String sessionId = i + "id";
 			int tankType = r.nextInt(2);
 
-			Tank t = new Tank(sessionId, 100);
+			AbstractTank t = new AbstractTank(sessionId, 100, new Suspension(), new Engine());
 			t.setpX(-1 * r.nextInt(30));
 			t.setpZ(-1 * r.nextInt(30));
 			t.setTankType(tankType);
@@ -84,31 +87,32 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 				while (true) {
 					for (int i = 0; i < 10; i++) {
 						String userId = i + "id";
+						MotionController mc = room.getMotionController(userId);
+
+						mc.setMoveForwardFlag(false);
+						mc.setMoveBackFlag(false);
+						mc.setTurnLeftFlag(false);
+						mc.setTurnRightFlag(false);
+
 						User user = room.getUsers().get(userId);
-
-						Tank t = user.getCurrentTank();
-						t.setMoveForwardFlag(false);
-						t.setMoveBackFlag(false);
-						t.setTurnLeftFlag(false);
-						t.setTurnRightFlag(false);
-
+						AbstractTank t = user.getCurrentTank();
 						if (t.getpZ() > 100 || t.getpZ() < -100 || t.getpX() > 100
 								|| t.getpX() < -100) {
-							t.setMoveBackFlag(true);
+							mc.setMoveBackFlag(true);
 						} else {
 							int act = r.nextInt(3);
 							switch (act) {
 							case 0:
-								t.setMoveForwardFlag(true);
+								mc.setMoveForwardFlag(true);
 								break;
 							case 1:
-								t.setMoveForwardFlag(true);
+								mc.setMoveForwardFlag(true);
 								break;
 							case 2:
-								t.setTurnLeftFlag(true);
+								mc.setTurnLeftFlag(true);
 								break;
 							case 3:
-								t.setTurnRightFlag(true);
+								mc.setTurnRightFlag(true);
 								break;
 							}
 						}

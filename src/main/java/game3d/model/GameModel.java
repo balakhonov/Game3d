@@ -3,8 +3,9 @@ package game3d.model;
 import game3d.Room;
 import game3d.RoomFactory;
 import game3d.app.controllers.IndexController;
-import game3d.mapping.Tank;
+import game3d.mapping.AbstractTank;
 import game3d.mapping.User;
+import game3d.motion.MotionController;
 import game3d.socketserver.model.DeviceRequest;
 import game3d.socketserver.model.DeviceSocketChannel;
 import game3d.websocketserver.handler.ObjectHandler;
@@ -16,7 +17,8 @@ import org.apache.log4j.Logger;
 public class GameModel {
 	private static final Logger LOG = Logger.getLogger(GameModel.class);
 
-	private Tank tank;
+	private MotionController motionController;
+	private AbstractTank tank;
 	private Room room;
 
 	public GameModel(DeviceSocketChannel ac) {
@@ -29,56 +31,57 @@ public class GameModel {
 
 		this.room = RoomFactory.getRoom(user.getCurrentRoom());
 		this.tank = room.getTanks().get(sessionId);
+		this.motionController = room.getMotionController(sessionId);
 	}
 
 	@DeviceRequest(command = "forwardDown")
 	public ResponsePackageData forwardDown() {
-		tank.setMoveForwardFlag(true);
+		motionController.setMoveForwardFlag(true);
 		return null;
 	}
 
 	@DeviceRequest(command = "forwardUp")
 	public ResponsePackageData forwardUp() {
-		tank.setMoveForwardFlag(false);
+		motionController.setMoveForwardFlag(false);
 		ObjectHandler.updatePosition(room, tank);
 		return null;
 	}
 
 	@DeviceRequest(command = "backDown")
 	public ResponsePackageData backDown() {
-		tank.setMoveBackFlag(true);
+		motionController.setMoveBackFlag(true);
 		return null;
 	}
 
 	@DeviceRequest(command = "backUp")
 	public ResponsePackageData backUp() {
-		tank.setMoveBackFlag(false);
+		motionController.setMoveBackFlag(false);
 		ObjectHandler.updatePosition(room, tank);
 		return null;
 	}
 
 	@DeviceRequest(command = "rotateLeftDown")
 	public ResponsePackageData rotateLeftDown() {
-		tank.setTurnLeftFlag(true);
+		motionController.setTurnLeftFlag(true);
 		return null;
 	}
 
 	@DeviceRequest(command = "rotateLeftUp")
 	public ResponsePackageData rotateLeftUp() {
-		tank.setTurnLeftFlag(false);
+		motionController.setTurnLeftFlag(false);
 		ObjectHandler.updatePosition(room, tank);
 		return null;
 	}
 
 	@DeviceRequest(command = "rotateRightDown")
 	public ResponsePackageData rotateRightDown() {
-		tank.setTurnRightFlag(true);
+		motionController.setTurnRightFlag(true);
 		return null;
 	}
 
 	@DeviceRequest(command = "rotateRightUp")
 	public ResponsePackageData rotateRightUp() {
-		tank.setTurnRightFlag(false);
+		motionController.setTurnRightFlag(false);
 		ObjectHandler.updatePosition(room, tank);
 		return null;
 	}

@@ -1,7 +1,7 @@
 package game3d.timeout;
 
 import game3d.Room;
-import game3d.mapping.Tank;
+import game3d.mapping.AbstractTank;
 import game3d.websocketserver.handler.TankHandler;
 
 public class TankConnectionTimeout extends ConectionTimeoutAction{
@@ -12,7 +12,7 @@ public class TankConnectionTimeout extends ConectionTimeoutAction{
 
 	@Override
 	public void onTimeout() {
-		Tank tank = (Tank) connection;
+		AbstractTank tank = (AbstractTank) connection;
 
 		room.removeUser(tank.getSessionId());
 		

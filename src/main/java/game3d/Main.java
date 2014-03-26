@@ -1,7 +1,7 @@
 package game3d;
 
 import game3d.effect.EffectsManager;
-import game3d.mapping.Tank;
+import game3d.mapping.AbstractTank;
 
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class Main {
 
 	static final EffectsManager EFFECTS_MANAGER = new EffectsManager();
-	static final Map<String, Tank> TANKS = new ConcurrentHashMap<>();
+	static final Map<String, AbstractTank> TANKS = new ConcurrentHashMap<>();
 
 	static ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(1);
 

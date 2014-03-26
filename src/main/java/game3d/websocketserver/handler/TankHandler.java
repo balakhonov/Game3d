@@ -1,7 +1,7 @@
 package game3d.websocketserver.handler;
 
 import game3d.Room;
-import game3d.mapping.Tank;
+import game3d.mapping.AbstractTank;
 import game3d.websocketserver.Package;
 import game3d.websocketserver.WebSocketServerHandler;
 import io.netty.channel.Channel;
@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class TankHandler {
 
-	public static void initAll(Channel channel, Collection<Tank> tank) {
+	public static void initAll(Channel channel, Collection<AbstractTank> tank) {
 		if (tank == null) {
 			throw new IllegalArgumentException("Tank should not be null");
 		}
@@ -22,7 +22,7 @@ public class TankHandler {
 		WebSocketServerHandler.channelWrite(channel, new Package("init_all_tanks", tank));
 	}
 
-	public static void init(Room room, Tank tank) {
+	public static void init(Room room, AbstractTank tank) {
 		if (room == null) {
 			throw new IllegalArgumentException("Room should not be null");
 		}
@@ -33,7 +33,7 @@ public class TankHandler {
 		WebSocketServerHandler.writeToRoom(new Package("init_new_tank", tank), room);
 	}
 
-	public static void remove(Room room, Tank tank) {
+	public static void remove(Room room, AbstractTank tank) {
 		if (room == null) {
 			throw new IllegalArgumentException("Room should not be null");
 		}
@@ -44,7 +44,7 @@ public class TankHandler {
 		WebSocketServerHandler.writeToRoom(new Package("remove_tank", tank), room);
 	}
 
-	public static void updatePosition(Room room, Tank tank) {
+	public static void updatePosition(Room room, AbstractTank tank) {
 		if (room == null) {
 			throw new IllegalArgumentException("Room should not be null");
 		}
@@ -61,7 +61,7 @@ public class TankHandler {
 		WebSocketServerHandler.writeToRoom(new Package("update_tank_position", map), room);
 	}
 
-	public static void updateRotation(Room room, Tank tank) {
+	public static void updateRotation(Room room, AbstractTank tank) {
 		if (room == null) {
 			throw new IllegalArgumentException("Room should not be null");
 		}

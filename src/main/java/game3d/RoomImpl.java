@@ -1,8 +1,9 @@
 package game3d;
 
 import game3d.effect.EffectsManager;
-import game3d.mapping.Tank;
+import game3d.mapping.AbstractTank;
 import game3d.mapping.User;
+import game3d.motion.MotionController;
 import game3d.timeout.ConectionTimeoutAction;
 import game3d.timeout.ConnectionManager;
 import game3d.timeout.TankConnectionTimeout;
@@ -47,7 +48,12 @@ public class RoomImpl implements Room {
 	/**
 	 * 
 	 */
-	private final Map<String, Tank> TANKS = new ConcurrentHashMap<>();
+	private final Map<String, AbstractTank> TANKS = new ConcurrentHashMap<>();
+
+	/**
+	 * 
+	 */
+	private final Map<String, MotionController> TANK_MOTION_CONTROLLERS = new ConcurrentHashMap<>();
 
 	/**
 	 * 
@@ -91,7 +97,7 @@ public class RoomImpl implements Room {
 
 	private void initialiseTank(User user) {
 		String sessionId = user.getSessionId();
-		Tank tank = user.getCurrentTank();
+		AbstractTank tank = user.getCurrentTank();
 
 		if (tank == null) {
 			throw new IllegalStateException("Tank should not be null before adding User to Room");
@@ -99,6 +105,9 @@ public class RoomImpl implements Room {
 
 		// add user tank to room
 		TANKS.put(sessionId, tank);
+
+		// add motion controller
+		TANK_MOTION_CONTROLLERS.put(sessionId, new MotionController(tank));
 
 		// create and add tank connection timeout listener
 		ConectionTimeoutAction ta = new TankConnectionTimeout(tank, this, 5000);
@@ -114,12 +123,17 @@ public class RoomImpl implements Room {
 			throw new IllegalArgumentException("Session ID should not be null or empty");
 		}
 
+		// remove user
 		USERS.remove(sessionId);
 
-		Tank tank = TANKS.remove(sessionId);
+		// remove user tank
+		AbstractTank tank = TANKS.remove(sessionId);
 		if (tank != null) {
 			TankHandler.remove(this, tank);
 		}
+
+		// remove tank motion controller
+		TANK_MOTION_CONTROLLERS.remove(sessionId);
 	}
 
 	@Override
@@ -137,12 +151,16 @@ public class RoomImpl implements Room {
 	}
 
 	@Override
-	public Map<String, Tank> getTanks() {
+	public Map<String, AbstractTank> getTanks() {
 		return TANKS;
 	}
 
 	public Set<Channel> getChannels() {
 		return CHANNELS;
+	}
+
+	public MotionController getMotionController(String sessionId) {
+		return TANK_MOTION_CONTROLLERS.get(sessionId);
 	}
 
 	private class RoomTaskProcessor implements Runnable {
@@ -169,30 +187,20 @@ public class RoomImpl implements Room {
 			new EffectsManager.EffectHandler(EFFECTS_MANAGER).run();
 
 			// process object relocations
-			synchronized (TANKS) {
-				for (Tank tank : TANKS.values()) {
+			synchronized (TANK_MOTION_CONTROLLERS) {
+				for (MotionController mc : TANK_MOTION_CONTROLLERS.values()) {
+					// if (tank.isConnected()) {
+					mc.move();
 
-					if (tank.isConnected()) {
-						if (tank.isMoveForwardFlag())
-							tank.moveForward();
-						else if (tank.isMoveBackFlag())
-							tank.moveBack();
+					if (mc.isMoving()) {
+						long diff = currentDateTime - startDate;
 
-						if (tank.isTurnLeftFlag())
-							tank.turnLeft();
-						else if (tank.isTurnRightFlag())
-							tank.turnRight();
-
-						if (tank.isMoveForwardFlag() || tank.isMoveBackFlag()
-								|| tank.isTurnLeftFlag() || tank.isTurnRightFlag()) {
-							long diff = currentDateTime - startDate;
-
-							if (diff > 60) {
-								positionChange = true;
-								ObjectHandler.updatePosition(room, tank);
-							}
+						if (diff > 60) {
+							positionChange = true;
+							ObjectHandler.updatePosition(room, (AbstractTank) mc.getMovable());
 						}
 					}
+					// }
 				}
 			}
 

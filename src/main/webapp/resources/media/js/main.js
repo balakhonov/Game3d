@@ -515,8 +515,7 @@ function createTankObject(data) {
 	var position = new THREE.Vector3(data.pX, data.pY, data.pZ);
 	var rotation = new THREE.Vector3(data.rX, data.rY, data.rZ);
 	var tank = new Tank(data.sessionId, position, rotation, MATERIAL_BLUE,
-			data.health, data.forwardSpeed, data.backSpeed, data.rotateSpeed,
-			data.tankType);
+			data.health, data.engine, data.suspension, data.tankType);
 	tank.id = data.id;
 	return tank;
 }
@@ -630,16 +629,16 @@ function render() {
 	renderer.render(scene, camera);
 }
 
-function Tank(sessionId, position, rotation, texture, health, forwardSpeed,
-		backSpeed, rotateSpeed, tankType) {
+function Tank(sessionId, position, rotation, texture, health, engine,
+		suspension, tankType) {
 	validateString(sessionId);
 	validateInstance(position, THREE.Vector3);
 	validateInstance(rotation, THREE.Vector3);
 	validateInstance(texture, THREE.MeshBasicMaterial);
 	validateInt(health);
-	validateFloat(forwardSpeed);
-	validateFloat(backSpeed);
-	validateFloat(rotateSpeed);
+	validateFloat(engine.forwardSpeed);
+	validateFloat(engine.backSpeed);
+	validateFloat(suspension.rotateSpeed);
 	validateInt(tankType);
 
 	var obj = TANK_MANAGER[tankType].clone();
@@ -652,9 +651,11 @@ function Tank(sessionId, position, rotation, texture, health, forwardSpeed,
 	obj.newRotation = [];
 	obj.texture = texture;
 	obj.health = health;
-	obj.forwardSpeed = forwardSpeed;
-	obj.backSpeed = backSpeed;
-	obj.rotateSpeed = rotateSpeed;
+	obj.engine = engine;
+	obj.suspension = suspension;
+	obj.forwardSpeed = engine.forwardSpeed;
+	obj.backSpeed = engine.backSpeed;
+	obj.rotateSpeed = suspension.rotateSpeed;
 	obj.moveTimeout = 0;
 
 	obj.tower = obj.getObjectByName("Gun_tower");

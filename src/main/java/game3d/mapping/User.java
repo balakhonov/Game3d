@@ -6,7 +6,7 @@ public class User extends DeviceSocketChannel.DeviceInfo {
 	private String name;
 	private int currentRoom;
 	private int currentTankType;
-	private Tank currentTank;
+	private AbstractTank currentTank;
 
 	public String getName() {
 		return name;
@@ -32,11 +32,11 @@ public class User extends DeviceSocketChannel.DeviceInfo {
 		this.currentTankType = currentTankType;
 	}
 
-	public Tank getCurrentTank() {
+	public AbstractTank getCurrentTank() {
 		return currentTank;
 	}
 
-	public void setCurrentTank(Tank currentTank) {
+	public void setCurrentTank(AbstractTank currentTank) {
 		this.currentTank = currentTank;
 	}
 }

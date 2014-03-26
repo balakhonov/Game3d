@@ -5,8 +5,10 @@ import com.google.gson.Gson;
 import game3d.Room;
 import game3d.RoomFactory;
 import game3d.app.util.GlobalProperties;
-import game3d.mapping.Tank;
+import game3d.mapping.AbstractTank;
 import game3d.mapping.User;
+import game3d.motion.Engine;
+import game3d.motion.Suspension;
 
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Controller;
@@ -44,7 +46,7 @@ public class IndexController extends AbstractController {
 	public static final Map<String, User> USERS_MAP = new ConcurrentHashMap<>();
 	private static int userIdGenerator = 0;
 
-	@RequestMapping(value = {"/"}, method = RequestMethod.GET)
+	@RequestMapping(value = { "/" }, method = RequestMethod.GET)
 	public ModelAndView index(HttpServletRequest request) {
 		try {
 			if (USERS_MAP.containsKey(request.getSession().getId())) {
@@ -73,8 +75,7 @@ public class IndexController extends AbstractController {
 		return new ModelAndView("panel/index", mapData);
 	}
 
-
-	@RequestMapping(value = {"/"}, method = RequestMethod.POST)
+	@RequestMapping(value = { "/" }, method = RequestMethod.POST)
 	public ModelAndView logIn(HttpServletRequest request) {
 		try {
 			String sessionId = request.getSession().getId();
@@ -94,18 +95,17 @@ public class IndexController extends AbstractController {
 		}
 	}
 
-
-	@RequestMapping(value = {"/room"}, method = RequestMethod.POST)
+	@RequestMapping(value = { "/room" }, method = RequestMethod.POST)
 	public ModelAndView enterRoom(@RequestParam(required = true, value = "roomId") int roomId,
-								  @RequestParam(required = true, value = "tankType") int tankType,
-								  HttpServletRequest request) {
+			@RequestParam(required = true, value = "tankType") int tankType,
+			HttpServletRequest request) {
 		LOG.info("tankType: " + tankType);
 		LOG.info("roomId: " + roomId);
 		String sessionId = request.getSession().getId();
-		
-		Tank tank = new Tank(sessionId, 1000);
+
+		AbstractTank tank = new AbstractTank(sessionId, 1000, new Suspension(), new Engine());
 		tank.setTankType(tankType);
-		
+
 		User user = USERS_MAP.get(sessionId);
 		if (user == null) {
 			return new ModelAndView("panel/login");
@@ -115,15 +115,13 @@ public class IndexController extends AbstractController {
 		user.setCurrentTankType(tankType);
 		user.setCurrentTank(tank);
 
-		
 		Room room = RoomFactory.getRoom(user.getCurrentRoom());
 		room.removeUser(user.getSessionId());
-		
+
 		return enterRoom(user);
 	}
 
-
-	@RequestMapping(value = {"/room"}, method = RequestMethod.GET)
+	@RequestMapping(value = { "/room" }, method = RequestMethod.GET)
 	public ModelAndView enterRoom(HttpServletRequest request) {
 		User user = USERS_MAP.get(request.getSession().getId());
 		if (user == null) {
@@ -144,6 +142,5 @@ public class IndexController extends AbstractController {
 
 		return new ModelAndView("panel/room", mapData);
 	}
-
 
 }
