@@ -61,6 +61,24 @@ public class TankHandler {
 		WebSocketServerHandler.writeToRoom(new Package("update_tank_position", map), room);
 	}
 
+	public static void updateTowerRotation(Room room, AbstractTank tank) {
+		if (room == null) {
+			throw new IllegalArgumentException("Room should not be null");
+		}
+		if (tank == null) {
+			throw new IllegalArgumentException("Tank should not be null");
+		}
+		if (!tank.hasTower()) {
+			return;
+		}
+
+		Map<String, Serializable> map = new HashMap<String, Serializable>();
+		map.put("id", tank.getId());
+		map.put("ry", tank.getTower().getrY());
+
+		WebSocketServerHandler.writeToRoom(new Package("on_tower_rotate", map), room);
+	}
+
 	public static void updateRotation(Room room, AbstractTank tank) {
 		if (room == null) {
 			throw new IllegalArgumentException("Room should not be null");

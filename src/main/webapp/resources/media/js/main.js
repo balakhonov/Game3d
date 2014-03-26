@@ -157,19 +157,21 @@ function keyBacksightDown() {
 }
 
 function keyTowerLeftDownListener() {
-	ownTank.tower.rotation.y += Math.PI / 420;
+	// ownTank.tower.rotation.y += Math.PI / 420;
+	SOCKET_CONTROLLER.send("rotateTowerLeftDown", {});
 }
 
 function keyTowerLeftUpListener() {
-
+	SOCKET_CONTROLLER.send("rotateTowerLeftUp", {});
 }
 
 function keyTowerRightDownListener() {
-	ownTank.tower.rotation.y -= Math.PI / 420;
+	// ownTank.tower.rotation.y -= Math.PI / 420;
+	SOCKET_CONTROLLER.send("rotateTowerRightDown", {});
 }
 
 function keyTowerRightUpListener() {
-
+	SOCKET_CONTROLLER.send("rotateTowerRightUp", {});
 }
 
 function keyTopDownListener() {
@@ -465,6 +467,7 @@ function init() {
 
 	ATMOSPHERE_MODEL
 			.addListener("update_tank_position", onObjectLocationChange);
+	ATMOSPHERE_MODEL.addListener("on_tower_rotate", onTowerRotate);
 	ATMOSPHERE_MODEL.addListener("init_all_tanks", onInitAllTanks);
 	ATMOSPHERE_MODEL.addListener("init_new_tank", onInitTank);
 	ATMOSPHERE_MODEL.addListener("remove_tank", onDisconnectTank);
@@ -520,6 +523,18 @@ function createTankObject(data) {
 	return tank;
 }
 
+function onTowerRotate(data) {
+	validateInt(data.id);
+	validateFloat(data.ry);
+	var obj = scene.getObjectById(data.id, false);
+	var tower = obj.tower;
+	if (tower) {
+		tower.newRotation.push(new THREE.Vector3(0, data.ry, 0));
+	} else {
+		console.error("Tower not found for Object {0}".format(data.id));
+	}
+}
+
 function onObjectLocationChange(data) {
 	validateInt(data.id);
 	validateFloat(data.rx);
@@ -534,7 +549,7 @@ function onObjectLocationChange(data) {
 		obj.newPosition.push(new THREE.Vector3(data.px, data.py, data.pz));
 		obj.newRotation.push(new THREE.Vector3(data.rx, data.ry, data.rz));
 	} else {
-		// console.error("Object {0} not found on scene".format(data.id));
+		console.error("Object {0} not found on scene".format(data.id));
 	}
 }
 
@@ -659,6 +674,8 @@ function Tank(sessionId, position, rotation, texture, health, engine,
 	obj.moveTimeout = 0;
 
 	obj.tower = obj.getObjectByName("Gun_tower");
+	obj.tower.rotationLock = false;
+	obj.tower.newRotation = [];
 
 	obj.toString = function() {
 		return "Tank[sessionId:{0},position:{1},rotation:{2},texture:{3},health:{4}]"
@@ -750,6 +767,22 @@ function changeRotation(obj, speed) {
 	}
 }
 
+/**
+ * 
+ * @param {THREE.Vector3}
+ *            obj
+ * @param {number}
+ *            speed
+ */
+function changeTowerRotation(obj, speed) {
+	var tower = obj.tower;
+	if (tower) {
+		changeRotation(tower, speed);
+	} else {
+		console.error("Tower not found");
+	}
+}
+
 function TaskManager() {
 	var tasks = [];
 
@@ -766,6 +799,7 @@ function TaskManager() {
 			var task = tasks[i];
 			changePosition(task, 1);
 			changeRotation(task, 0.1)
+			changeTowerRotation(task, 0.1)
 		}
 
 		setTimeout(run, 1);

@@ -197,7 +197,11 @@ public class RoomImpl implements Room {
 
 						if (diff > 60) {
 							positionChange = true;
+							// update tank position
 							ObjectHandler.updatePosition(room, (AbstractTank) mc.getMovable());
+
+							// update tank tower rotation
+							TankHandler.updateTowerRotation(room, (AbstractTank) mc.getMovable());
 						}
 					}
 					// }

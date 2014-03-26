@@ -1,6 +1,7 @@
 package game3d.mapping;
 
 import game3d.Animate3d;
+import game3d.Tower;
 import game3d.motion.Engine;
 import game3d.motion.Movable;
 import game3d.motion.Suspension;
@@ -19,14 +20,21 @@ public class AbstractTank extends Animate3d implements Health, Connection, Seria
 
 	private Suspension suspension;
 	private Engine engine;
+	private Tower tower;
 
 	private boolean connected;
 
 	public AbstractTank(String userId, double health, Suspension suspension, Engine engine) {
+		this(userId, health, suspension, engine, null);
+	}
+
+	public AbstractTank(String userId, double health, Suspension suspension, Engine engine,
+			Tower tower) {
 		this.userId = userId;
 		this.health = health;
 		this.suspension = suspension;
 		this.engine = engine;
+		this.tower = tower;
 
 		this.connected = true;
 	}
@@ -115,5 +123,27 @@ public class AbstractTank extends Animate3d implements Health, Connection, Seria
 	public void turnRight(boolean inversion) {
 		double step = Math.PI / suspension.getRotateSpeed();
 		rotateY((inversion) ? step : -step);
+	}
+
+	@Override
+	public boolean hasTower() {
+		return (tower != null);
+	}
+
+	@Override
+	public Tower getTower() {
+		return tower;
+	}
+
+	@Override
+	public void turnTowerLeft() {
+		double step = Math.PI / tower.getRotateSpeed();
+		tower.rotateY(step);
+	}
+
+	@Override
+	public void turnTowerRight() {
+		double step = Math.PI / tower.getRotateSpeed();
+		tower.rotateY(-step);
 	}
 }

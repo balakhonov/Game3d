@@ -9,6 +9,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import game3d.Room;
 import game3d.RoomFactory;
+import game3d.Tower;
 import game3d.app.controllers.IndexController;
 import game3d.mapping.AbstractTank;
 import game3d.mapping.User;
@@ -67,7 +68,8 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 			String sessionId = i + "id";
 			int tankType = r.nextInt(2);
 
-			AbstractTank t = new AbstractTank(sessionId, 100, new Suspension(), new Engine());
+			AbstractTank t = new AbstractTank(sessionId, 100, new Suspension(), new Engine(),
+					new Tower());
 			t.setpX(-1 * r.nextInt(30));
 			t.setpZ(-1 * r.nextInt(30));
 			t.setTankType(tankType);

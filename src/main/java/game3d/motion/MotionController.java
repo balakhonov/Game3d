@@ -6,6 +6,8 @@ public class MotionController {
 	private volatile boolean moveBackFlag = false;
 	private volatile boolean turnLeftFlag = false;
 	private volatile boolean turnRightFlag = false;
+	private volatile boolean turnTowerLeftFlag = false;
+	private volatile boolean turnTowerRightFlag = false;
 
 	private Movable movable;
 
@@ -24,6 +26,14 @@ public class MotionController {
 			movable.turnLeft(moveBackFlag);
 		} else if (turnRightFlag) {
 			movable.turnRight(moveBackFlag);
+		}
+
+		if (movable.hasTower()) {
+			if (turnTowerLeftFlag) {
+				movable.turnTowerLeft();
+			} else if (turnTowerRightFlag) {
+				movable.turnTowerRight();
+			}
 		}
 	}
 
@@ -59,11 +69,31 @@ public class MotionController {
 		this.moveBackFlag = moveBackFlag;
 	}
 
+	public boolean isTurnTowerLeftFlag() {
+		return turnTowerLeftFlag;
+	}
+
+	public void setTurnTowerLeftFlag(boolean turnTowerLeftFlag) {
+		this.turnTowerLeftFlag = turnTowerLeftFlag;
+	}
+
+	public boolean isTurnTowerRightFlag() {
+		return turnTowerRightFlag;
+	}
+
+	public void setTurnTowerRightFlag(boolean turnTowerRightFlag) {
+		this.turnTowerRightFlag = turnTowerRightFlag;
+	}
+
 	public Movable getMovable() {
 		return movable;
 	}
 
+	private boolean isTowerMoving() {
+		return (movable.hasTower() && (turnTowerLeftFlag || turnTowerRightFlag));
+	}
+
 	public boolean isMoving() {
-		return (moveForwardFlag || moveBackFlag || turnLeftFlag || turnRightFlag);
+		return (moveForwardFlag || moveBackFlag || turnLeftFlag || turnRightFlag || isTowerMoving());
 	}
 }

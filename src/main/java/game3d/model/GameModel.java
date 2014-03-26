@@ -9,7 +9,6 @@ import game3d.motion.MotionController;
 import game3d.socketserver.model.DeviceRequest;
 import game3d.socketserver.model.DeviceSocketChannel;
 import game3d.websocketserver.handler.ObjectHandler;
-import io.netty.handler.mapping.ResponsePackageData;
 
 import org.apache.log4j.Logger;
 
@@ -35,54 +34,68 @@ public class GameModel {
 	}
 
 	@DeviceRequest(command = "forwardDown")
-	public ResponsePackageData forwardDown() {
+	public void forwardDown() {
 		motionController.setMoveForwardFlag(true);
-		return null;
 	}
 
 	@DeviceRequest(command = "forwardUp")
-	public ResponsePackageData forwardUp() {
+	public void forwardUp() {
 		motionController.setMoveForwardFlag(false);
 		ObjectHandler.updatePosition(room, tank);
-		return null;
 	}
 
 	@DeviceRequest(command = "backDown")
-	public ResponsePackageData backDown() {
+	public void backDown() {
 		motionController.setMoveBackFlag(true);
-		return null;
 	}
 
 	@DeviceRequest(command = "backUp")
-	public ResponsePackageData backUp() {
+	public void backUp() {
 		motionController.setMoveBackFlag(false);
 		ObjectHandler.updatePosition(room, tank);
-		return null;
 	}
 
 	@DeviceRequest(command = "rotateLeftDown")
-	public ResponsePackageData rotateLeftDown() {
+	public void rotateLeftDown() {
 		motionController.setTurnLeftFlag(true);
-		return null;
 	}
 
 	@DeviceRequest(command = "rotateLeftUp")
-	public ResponsePackageData rotateLeftUp() {
+	public void rotateLeftUp() {
 		motionController.setTurnLeftFlag(false);
 		ObjectHandler.updatePosition(room, tank);
-		return null;
 	}
 
 	@DeviceRequest(command = "rotateRightDown")
-	public ResponsePackageData rotateRightDown() {
+	public void rotateRightDown() {
 		motionController.setTurnRightFlag(true);
-		return null;
 	}
 
 	@DeviceRequest(command = "rotateRightUp")
-	public ResponsePackageData rotateRightUp() {
+	public void rotateRightUp() {
 		motionController.setTurnRightFlag(false);
 		ObjectHandler.updatePosition(room, tank);
-		return null;
+	}
+
+	@DeviceRequest(command = "rotateTowerLeftDown")
+	public void rotateTowerLeftDown() {
+		motionController.setTurnTowerLeftFlag(true);
+	}
+
+	@DeviceRequest(command = "rotateTowerLeftUp")
+	public void rotateTowerLeftUp() {
+		motionController.setTurnTowerLeftFlag(false);
+		ObjectHandler.updatePosition(room, tank);
+	}
+
+	@DeviceRequest(command = "rotateTowerRightDown")
+	public void rotateTowerRightDown() {
+		motionController.setTurnTowerRightFlag(true);
+	}
+
+	@DeviceRequest(command = "rotateTowerRightUp")
+	public void rotateTowerRightUp() {
+		motionController.setTurnTowerRightFlag(false);
+		ObjectHandler.updatePosition(room, tank);
 	}
 }
