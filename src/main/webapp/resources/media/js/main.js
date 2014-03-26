@@ -248,6 +248,7 @@ function keyFireListener() {
 	});
 	if (rayIntersects[0]) {
 		var object = rayIntersects[0];
+		var oldMaterial = object.object.material;
 		object.object.material = MATERIAL_RED;
 
 		var target = findTankObjectByChield(object.object);
@@ -256,7 +257,7 @@ function keyFireListener() {
 		SOCKET_CONTROLLER.send("fire", target.sessionId);
 
 		setTimeout(function() {
-			object.object.material = MATERIAL_GREEN;
+			object.object.material = oldMaterial;
 		}, 100);
 	}
 
@@ -552,7 +553,8 @@ function init() {
 	scene.add(camera);
 
 	// Lights
-	scene.add(new THREE.AmbientLight(0x666666));
+	AMBIENT_LIGHT = new THREE.AmbientLight(0x666666);
+	scene.add(AMBIENT_LIGHT);
 
 	var light = new THREE.DirectionalLight(0x666666, 1.75);
 	light.position.set(50, 30, 100);
@@ -599,6 +601,16 @@ function onWounded(data) {
 	console.log("onWounded", data.sessionId == SESSION_ID);
 	if (data.sessionId == SESSION_ID) {
 		$(".health-bar .cur").html(data.health);
+
+		scene.remove(AMBIENT_LIGHT);
+		AMBIENT_LIGHT = new THREE.AmbientLight(0x660000);
+		scene.add(AMBIENT_LIGHT);
+
+		setTimeout(function() {
+			scene.remove(AMBIENT_LIGHT);
+			AMBIENT_LIGHT = new THREE.AmbientLight(0x666666);
+			scene.add(AMBIENT_LIGHT);
+		}, 100);
 	}
 }
 
