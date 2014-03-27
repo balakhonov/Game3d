@@ -76,7 +76,7 @@ function ResourceManager() {
 	};
 }
 
-var AMBIENT_LIGHT = new THREE.AmbientLight(0x660000);
+var AMBIENT_LIGHT = new THREE.AmbientLight(0x666666);
 
 var LOADING_MANAGER = new THREE.LoadingManager();
 LOADING_MANAGER.onProgress = function(item, loaded, total) {
@@ -229,7 +229,7 @@ function getIntersectingObjects() {
 	var ray = new THREE.Raycaster(startPos, direction);
 	var rayIntersects = ray.intersectObjects(scene.children, true);
 
-	showBulletIntersectLine();
+	//	showBulletIntersectLine();
 
 	return rayIntersects;
 }
