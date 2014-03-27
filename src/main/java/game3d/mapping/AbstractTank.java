@@ -17,6 +17,7 @@ public class AbstractTank extends Animate3d implements Health, Connection, Seria
 	private String userId;
 	private int tankType;
 	private String objName;
+	private double totalHealth;
 	private double health;
 
 	private Suspension suspension;
@@ -34,6 +35,7 @@ public class AbstractTank extends Animate3d implements Health, Connection, Seria
 	public AbstractTank(String userId, double health, Suspension suspension, Engine engine,
 			Weapon weapon, Tower tower) {
 		this.userId = userId;
+		this.totalHealth = health;
 		this.health = health;
 		this.suspension = suspension;
 		this.engine = engine;
@@ -157,5 +159,15 @@ public class AbstractTank extends Animate3d implements Health, Connection, Seria
 
 	public void setWeapon(Weapon weapon) {
 		this.weapon = weapon;
+	}
+
+	@Override
+	public void setTotalHealth(double totalHealth) {
+		this.totalHealth = totalHealth;
+	}
+
+	@Override
+	public double getTotalHealth() {
+		return totalHealth;
 	}
 }

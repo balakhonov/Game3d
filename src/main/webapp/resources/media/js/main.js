@@ -23,9 +23,6 @@ var bullet1;
 var OBJECTS_PATH = "/resources/media/js/obj/";
 var INTERIOR_SCALE = 1;
 
-var userUUID = SESSION_ID;
-var userList = [];
-var userObject;
 var TANK_MANAGER = [];
 
 var backsightDown = false;
@@ -35,7 +32,7 @@ var rechargeLabel = new THREE.Object3D();
 
 var RESOURCE_MANAGER = new ResourceManager();
 
-function ResourceManager(preloader) {
+function ResourceManager() {
 	var that = this;
 	var total = 0;
 	var count = 0;
@@ -45,7 +42,7 @@ function ResourceManager(preloader) {
 		QueryLoader.selectorPreload = "body";
 		QueryLoader.withLogo = true;
 		QueryLoader.init(function() {
-			for ( var i in items) {
+			for ( var i in items ) {
 				var call = items[i];
 				call();
 			}
@@ -79,16 +76,14 @@ function ResourceManager(preloader) {
 	};
 }
 
-function Preloader(id) {
-
-}
+var AMBIENT_LIGHT = new THREE.AmbientLight(0x660000);
 
 var LOADING_MANAGER = new THREE.LoadingManager();
 LOADING_MANAGER.onProgress = function(item, loaded, total) {
 	console.log(item, loaded, total);
 };
 LOADING_MANAGER.onLoad = function(item, loaded, total) {
-	console.log("LOADING_MANAGER onLoad");
+	console.log("LOADING_MANAGER onLoad", item, loaded, total);
 
 	onAllResourceLoaded();
 };
@@ -111,8 +106,21 @@ var MATERIAL_BLUE = new THREE.MeshBasicMaterial({
 	wireframe: true
 });
 
+var LINE_BASIC_MATERIAL_BLACK = new THREE.LineBasicMaterial({
+	color: 0x000000
+});
+
+var LINE_BASIC_MATERIAL_GREEN = new THREE.LineBasicMaterial({
+	color: 0x00FF00
+});
+
+var LINE_BASIC_MATERIAL_ORANGE = new THREE.LineBasicMaterial({
+	color: 0xFF9900
+});
+
 var ATMOSPHERE_MODEL = new AtmosphereModel();
 var TASK_MANAGER = new TaskManager();
+var TANK_INFO_LABEL_CONTROLLER = new TankInfoLabelController();
 
 init();
 animate();
@@ -151,7 +159,8 @@ function keyBacksightDown() {
 
 	if (backsightDown) {
 		ownTank.tower.remove(backsight);
-	} else {
+	}
+	else {
 		backsight = createBacksight(0.03, 0.1, 10);
 		ownTank.tower.add(backsight);
 	}
@@ -209,15 +218,85 @@ function keyRightUpListener() {
 	SOCKET_CONTROLLER.send("rotateRightUp", {});
 }
 
-function keyFireListener() {
-	if (!ownTank.weapon.reloaded) {
-		return;
+var intersectLine;
+function getIntersectingObjects() {
+	if (!ownTank) {
+		return [];
 	}
-	ownTank.weapon.reloaded = false;
-
-	var distance = 100;
-
 	var direction = ownTank.tower.direction(ownTank);
+	var startPos = getTankBulletStartPosition();
+
+	var ray = new THREE.Raycaster(startPos, direction);
+	var rayIntersects = ray.intersectObjects(scene.children, true);
+
+	showBulletIntersectLine();
+
+	return rayIntersects;
+}
+
+function showBulletIntersectLine() {
+	var startEndPos = getBulletStartEndPos(1000);
+
+	scene.remove(intersectLine);
+	intersectLine = createLine3d(startEndPos.s, startEndPos.e, LINE_BASIC_MATERIAL_BLACK);
+	scene.add(intersectLine);
+}
+
+function getTankBulletStartPosition() {
+	var startPos = ownTank.position.clone();
+	startPos.y = 1;
+	return startPos;
+}
+
+function showTanksLabels() {
+	var objects = getIntersectingObjects();
+
+	TANK_INFO_LABEL_CONTROLLER.hide();
+
+	if (objects && objects[0]) {
+		for ( var i in objects ) {
+			var object = objects[i];
+			if (object.object instanceof THREE.Line) {
+				continue;
+			}
+
+			var target = findTankObjectByChield(object.object);
+
+			if (target && target.sessionId != SESSION_ID) {
+				// var xy = toScreenXY(target.position, camera, null);
+
+				TANK_INFO_LABEL_CONTROLLER.show(target);
+				break;
+			}
+		}
+	}
+
+	setTimeout(showTanksLabels, 200);
+}
+
+function create2DTextSprite(text, font, color) {
+	var canvas = document.createElement('canvas');
+	var context = canvas.getContext('2d');
+	context.font = font;
+	context.fillStyle = color;
+	context.fillText(text, 0, 10);
+
+	var texture = new THREE.Texture(canvas);
+	texture.needsUpdate = true;
+
+	var spriteMaterial = new THREE.SpriteMaterial({
+		map: texture
+	});
+
+	var textSprite = new THREE.Sprite(spriteMaterial);
+	textSprite.scale.set(1, 1, 1);
+
+	return textSprite;
+}
+
+function getBulletStartEndPos(distance) {
+	var direction = ownTank.tower.direction(ownTank);
+
 	var tg = Math.atan(direction.z / direction.x);
 	var rotCos = Math.cos(tg);
 	var rotSin = Math.sin(tg);
@@ -227,62 +306,78 @@ function keyFireListener() {
 	var endX = signX * Math.abs(distance * rotCos) + ownTank.position.x;
 	var endZ = signZ * Math.abs(distance * rotSin) + ownTank.position.z;
 
-	var startX = -5 * (signX * Math.abs(rotCos));
-	var startZ = -5 * (signZ * Math.abs(rotSin));
+	var startX = ownTank.position.x + 6 * (signX * Math.abs(rotCos));
+	var startZ = ownTank.position.z + 6 * (signZ * Math.abs(rotSin));
+
+	return {
+		s: new THREE.Vector3(startX, 1.8, startZ),
+		e: new THREE.Vector3(endX, 1.8, endZ)
+	};
+}
+
+function keyFireListener() {
+	if (!ownTank.weapon.reloaded) {
+		return;
+	}
+	ownTank.weapon.reloaded = false;
+
+	var distance = 100;
+	var direction = ownTank.tower.direction(ownTank);
+	var startEndPos = getBulletStartEndPos(distance);
 
 	var scale = 0.1;
 	var bullet = bullet1.clone();
 	bullet.name = "bullet";
 	bullet.scale.set(scale, scale, scale);
-	bullet.position.copy(ownTank.position);
-	bullet.position.sub(new THREE.Vector3(startX, -1.8, startZ));
+	bullet.position.set(startEndPos.s.x, startEndPos.s.y, startEndPos.s.z);
 
-	var ray = new THREE.Raycaster(bullet.position, direction);
+	var ray = new THREE.Raycaster(startEndPos.s, direction);
 	var rayIntersects = ray.intersectObjects(scene.children, true);
-	rayIntersects.forEach(function(object) {
-		// object.object.material = MATERIAL_RED;
-		//
-		// setTimeout(function() {
-		// object.object.material = MATERIAL_GREEN;
-		// }, 100);
-	});
-	if (rayIntersects[0]) {
-		var object = rayIntersects[0];
-		var oldMaterial = object.object.material;
-		object.object.material = MATERIAL_RED;
 
+	for ( var i in rayIntersects ) {
+		var object = rayIntersects[i];
 		var target = findTankObjectByChield(object.object);
-		console.log(target);
 
-		SOCKET_CONTROLLER.send("fire", target.sessionId);
+		if (target && target.sessionId != SESSION_ID) {
+			var oldMaterial = object.object.material;
+			object.object.material = MATERIAL_RED;
 
-		setTimeout(function() {
-			object.object.material = oldMaterial;
-		}, 100);
+			SOCKET_CONTROLLER.send("fire", target.sessionId);
+
+			function revertMaterial() {
+				object.object.material = oldMaterial;
+			}
+
+			setTimeout(revertMaterial, 100);
+			break;
+		}
 	}
 
 	scene.add(bullet);
 
 	var step = 5;
-	var stepX = Math.abs(bullet.position.x - endX) / distance * step;
-	var stepZ = Math.abs(bullet.position.z - endZ) / distance * step;
-	animateBullet(bullet, endX, endZ, stepX, stepZ, 10,
-			(bullet.position.x < endX), (bullet.position.z < endZ), direction);
+	var stepX = Math.abs(bullet.position.x - startEndPos.e.x) / distance * step;
+	var stepZ = Math.abs(bullet.position.z - startEndPos.e.z) / distance * step;
+	animateBullet(bullet, startEndPos.e.x, startEndPos.e.z, stepX, stepZ, 10, (bullet.position.x < startEndPos.e.x), (bullet.position.z < startEndPos.e.z), direction);
 
 	animateBacksight(5, 1, (5 > 1));
 	animateRecharge(1 / ownTank.weapon.shotFreq * 1000);
 }
 
 function findTankObjectByChield(obj) {
+	if (!obj) {
+		return null;
+	}
+
 	if (obj.sessionId) {
 		return obj;
-	} else {
+	}
+	else {
 		return findTankObjectByChield(obj.parent);
 	}
 }
 
-function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2,
-		direction) {
+function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2, direction) {
 	setTimeout(function() {
 
 		if ((bullet.position.x <= endX) == b1) {
@@ -298,34 +393,10 @@ function animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2,
 				bullet.position.z -= stepZ;
 		}
 
-		// var ray = new THREE.Raycaster(bullet.position, direction);
-		//
-		// var rayIntersects = ray.intersectObjects(scene.children, true);
-		// if (rayIntersects[0]) {
-		// var object = rayIntersects[0];
-		// if (object.object.name != "bullet" && object.distance < 6) {
-		// // console.log(object.object.parent.parent.health);
-		// object.object.parent.parent.health -= 30;
-		//
-		// object.object.material = MATERIAL_RED;
-		// setTimeout(function() {
-		// if (object.object.parent.parent.health < 0) {
-		// scene.remove(object.object.parent.parent);
-		// } else {
-		// object.object.material = MATERIAL_GREEN;
-		// }
-		// }, 100);
-		//
-		// scene.remove(bullet);
-		// return;
-		// }
-		// }
-
-		if (((bullet.position.z <= endZ) == b2)
-				|| ((bullet.position.x <= endX) == b1)) {
-			animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2,
-					direction);
-		} else {
+		if (((bullet.position.z <= endZ) == b2) || ((bullet.position.x <= endX) == b1)) {
+			animateBullet(bullet, endX, endZ, stepX, stepZ, timeout, b1, b2, direction);
+		}
+		else {
 			scene.remove(bullet);
 		}
 	}, timeout);
@@ -337,11 +408,10 @@ function createBacksight(offset1, offset2, num) {
 	});
 
 	var backsight = new THREE.Object3D();
-	backsight.position.set(camera.position.x, camera.position.y - 0.05,
-			camera.position.z - 2);
+	backsight.position.set(camera.position.x, camera.position.y - 0.05, camera.position.z - 2);
 
 	var step = 2 * Math.PI / num;
-	for ( var i = 0; i < num; i++) {
+	for ( var i = 0; i < num; i++ ) {
 		var x1 = Math.cos(i * step) * offset1;
 		var x2 = Math.cos(i * step) * offset2;
 		var y1 = Math.sin(i * step) * offset1;
@@ -361,12 +431,7 @@ function createBacksight(offset1, offset2, num) {
 }
 
 function createRechargeLabel(offset1, offset2, maxLines, lines) {
-	var material = new THREE.LineBasicMaterial({
-		color: (maxLines <= lines) ? 0x00ff00 : 0xff9900
-	});
-	var materialB = new THREE.LineBasicMaterial({
-		color: 0x000000
-	});
+	var material = (maxLines <= lines) ? LINE_BASIC_MATERIAL_GREEN : LINE_BASIC_MATERIAL_ORANGE;
 
 	var rechargeLabel = new THREE.Object3D();
 	rechargeLabel.position.set(0, 0, -1.5);
@@ -374,7 +439,7 @@ function createRechargeLabel(offset1, offset2, maxLines, lines) {
 	var step = (Math.PI / maxLines / 2);
 	var angleOffset = Math.PI / 1.5;
 
-	for ( var i = maxLines - 1; i > 0; i--) {
+	for ( var i = maxLines - 1; i > 0; i-- ) {
 		if (maxLines - i > lines) {
 			break;
 		}
@@ -384,24 +449,25 @@ function createRechargeLabel(offset1, offset2, maxLines, lines) {
 		var x2 = Math.cos(i * step + angleOffset) * offset2;
 		var y2 = Math.sin(i * step + angleOffset) * offset2;
 
-		var geometry = new THREE.Geometry();
-		geometry.vertices.push(new THREE.Vector3(x1, y1, 0));
-		geometry.vertices.push(new THREE.Vector3(x2, y2, 0));
-
-		var line = new THREE.Line(geometry, material);
-		line.scale.x = line.scale.y = line.scale.z = 1;
+		var line = createLine3d(new THREE.Vector3(x1, y1, 0), new THREE.Vector3(x2, y2, 0), material);
 		rechargeLabel.add(line);
 
-		var geometry = new THREE.Geometry();
-		geometry.vertices.push(new THREE.Vector3(x1, y1 - 0.005, 0));
-		geometry.vertices.push(new THREE.Vector3(x2, y2 - 0.005, 0));
-
-		var line = new THREE.Line(geometry, materialB);
-		line.scale.x = line.scale.y = line.scale.z = 1;
+		line = createLine3d(new THREE.Vector3(x1, y1 - 0.005, 0), new THREE.Vector3(x2, y2 - 0.005, 0), LINE_BASIC_MATERIAL_BLACK);
 		rechargeLabel.add(line);
 	}
 
 	return rechargeLabel;
+}
+
+function createLine3d(startVec, endVec, material) {
+	var geometry = new THREE.Geometry();
+	geometry.vertices.push(startVec);
+	geometry.vertices.push(endVec);
+
+	var line = new THREE.Line(geometry, material);
+	line.scale.x = line.scale.y = line.scale.z = 1;
+
+	return line;
 }
 
 function animateBacksight(start, end, inc) {
@@ -454,7 +520,7 @@ function bindCameraToTank(uuid) {
 
 	ownTank = tank;
 	$(".health-bar .cur").html(ownTank.health);
-	$(".health-bar .max").html(ownTank.health);
+	$(".health-bar .max").html(ownTank.totalHealth);
 	cameraIsBind = true;
 }
 
@@ -483,7 +549,8 @@ function animateRecharge(delay) {
 			clearTimeout(timer);
 			passedTime = 0;
 			ownTank.weapon.reloaded = true;
-		} else {
+		}
+		else {
 			timer = setTimeout(function() {
 				animate();
 			}, timerDelay);
@@ -497,55 +564,13 @@ function initTankObjects(tanks) {
 	});
 }
 
-function onNewUserConnect(uuid) {
-	if (!isString(uuid)) {
-		throw new Error("uuid should be ans String", uuid);
-	}
-	console.info("onNewUserConnect", uuid);
-
-	userList.push(uuid);
-	// addObject(uuid);
-}
-
-function onReceiveMessage(message) {
-	if (!isObject(message)) {
-		throw new Error("Message sould be an object type");
-	}
-	console.info("onReceiveMessage", message);
-}
-
-function addObject(uuid) {
-	if (!isString(uuid)) {
-		throw new Error("uuid should be ans String", uuid);
-	}
-	console.info("addObject", uuid);
-
-	var loader = new THREE.ObjectLoader(LOADING_MANAGER);
-	loader.load('/resources/media/js/obj/1.json', function(object) {
-		var texture = THREE.ImageUtils
-				.loadTexture("/resources/media/js/obj/421795696.png");
-		var material = new THREE.MeshLambertMaterial({
-			map: texture
-		});
-
-		object.material = material;
-
-		scene.add(object);
-
-		if (uuid == userUUID) {
-			userObject = object;
-		}
-	});
-}
-
 function init() {
 	// scene
 	scene = new THREE.Scene();
 	scene.fog = new THREE.Fog(0xcce0ff, 0.1, 150);
 
 	// camera
-	camera = new THREE.PerspectiveCamera(50, window.innerWidth
-			/ window.innerHeight, 1, 10000);
+	camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
 	// camera.position.set(0, 8, 8);
 	camera.rotation.z = 0;
 	camera.rotation.x = -Math.PI / 5;
@@ -553,7 +578,6 @@ function init() {
 	scene.add(camera);
 
 	// Lights
-	AMBIENT_LIGHT = new THREE.AmbientLight(0x666666);
 	scene.add(AMBIENT_LIGHT);
 
 	var light = new THREE.DirectionalLight(0x666666, 1.75);
@@ -576,13 +600,14 @@ function init() {
 
 	loadLabels();
 
+	showTanksLabels();
+
 	RESOURCE_MANAGER.start();
 
 	// Events
 	window.addEventListener('resize', onWindowResize, false);
 
-	ATMOSPHERE_MODEL
-			.addListener("update_tank_position", onObjectLocationChange);
+	ATMOSPHERE_MODEL.addListener("update_tank_position", onObjectLocationChange);
 	ATMOSPHERE_MODEL.addListener("on_tower_rotate", onTowerRotate);
 	ATMOSPHERE_MODEL.addListener("init_all_tanks", onInitAllTanks);
 	ATMOSPHERE_MODEL.addListener("init_new_tank", onInitTank);
@@ -591,12 +616,18 @@ function init() {
 	ATMOSPHERE_MODEL.addListener("on_destroyed", onDestroyed);
 }
 
+/**
+ * @param {{id:number,sessionId:String,health:number,dmg:number}} data
+ */
 function onWounded(data) {
 	console.log("onWounded", data);
 	validateInt(data.id);
 	validateString(data.sessionId);
 	validateFloat(data.health);
 	validateFloat(data.dmg);
+
+	var obj = scene.getObjectById(data.id, false);
+	obj.health -= data.dmg;
 
 	console.log("onWounded", data.sessionId == SESSION_ID);
 	if (data.sessionId == SESSION_ID) {
@@ -649,7 +680,7 @@ function onInitAllTanks(data) {
 
 	var tanks = [];
 
-	for ( var i in data) {
+	for ( var i in data ) {
 		var obj = data[i];
 		tanks.push(createTankObject(obj));
 	}
@@ -673,12 +704,15 @@ function onInitTank(data) {
 	bindCameraToTank(SESSION_ID);
 }
 
+/**
+ *
+ * @param {{pX:number,pY:number,pZ:number,rX:number,rY:number,rZ:number}}data
+ * @returns {Tank}
+ */
 function createTankObject(data) {
 	var position = new THREE.Vector3(data.pX, data.pY, data.pZ);
 	var rotation = new THREE.Vector3(data.rX, data.rY, data.rZ);
-	var tank = new Tank(data.sessionId, position, rotation, MATERIAL_BLUE,
-			data.health, data.engine, data.suspension, data.tower, data.weapon,
-			data.tankType);
+	var tank = new Tank(data.sessionId, position, rotation, MATERIAL_BLUE, data.totalHealth, data.health, data.engine, data.suspension, data.tower, data.weapon, data.tankType);
 	tank.id = data.id;
 	return tank;
 }
@@ -691,7 +725,8 @@ function onTowerRotate(data) {
 		var tower = obj.tower;
 		if (tower) {
 			tower.newRotation.push(new THREE.Vector3(0, data.ry, 0));
-		} else {
+		}
+		else {
 			console.error("Tower not found for Object {0}".format(data.id));
 		}
 	}
@@ -710,7 +745,8 @@ function onObjectLocationChange(data) {
 	if (obj) {
 		obj.newPosition.push(new THREE.Vector3(data.px, data.py, data.pz));
 		obj.newRotation.push(new THREE.Vector3(data.rx, data.ry, data.rz));
-	} else {
+	}
+	else {
 		// console.error("Object {0} not found on scene".format(data.id));
 	}
 }
@@ -729,8 +765,7 @@ function loadObjects() {
 	loadInteriorResources();
 
 	// load
-	bullet1 = new THREE.Mesh(new THREE.CubeGeometry(2, 2, 2),
-			new THREE.MeshNormalMaterial());
+	bullet1 = new THREE.Mesh(new THREE.CubeGeometry(2, 2, 2), new THREE.MeshNormalMaterial());
 
 	// load tanks
 	loadTankResources();
@@ -739,8 +774,7 @@ function loadObjects() {
 function loadTankResources() {
 	TANK_OBJ_SET.forEach(function(id) {
 		RESOURCE_MANAGER.add(function() {
-			OBJ_MTL_LOADER.load(OBJECTS_PATH + id + ".obj", OBJECTS_PATH + id
-					+ ".mtl", callbackLoadTankResources);
+			OBJ_MTL_LOADER.load(OBJECTS_PATH + id + ".obj", OBJECTS_PATH + id + ".mtl", callbackLoadTankResources);
 		});
 	});
 }
@@ -755,8 +789,7 @@ function callbackLoadTankResources(tank) {
 function loadInteriorResources() {
 	RESOURCE_MANAGER.add(function() {
 		var path = OBJECTS_PATH + "grasslight-big.jpg";
-		THREE.ImageUtils.loadTexture(path, undefined,
-				callbackLoadInteriorTexture);
+		THREE.ImageUtils.loadTexture(path, undefined, callbackLoadInteriorTexture);
 	});
 }
 
@@ -806,12 +839,12 @@ function render() {
 	renderer.render(scene, camera);
 }
 
-function Tank(sessionId, position, rotation, texture, health, engine,
-		suspension, tower, weapon, tankType) {
+function Tank(sessionId, position, rotation, texture, totalHealth, health, engine, suspension, tower, weapon, tankType) {
 	validateString(sessionId);
 	validateInstance(position, THREE.Vector3);
 	validateInstance(rotation, THREE.Vector3);
 	validateInstance(texture, THREE.MeshBasicMaterial);
+	validateInt(totalHealth);
 	validateInt(health);
 	validateFloat(engine.forwardSpeed);
 	validateFloat(engine.backSpeed);
@@ -827,6 +860,7 @@ function Tank(sessionId, position, rotation, texture, health, engine,
 	obj.rotationLock = false;
 	obj.newRotation = [];
 	obj.texture = texture;
+	obj.totalHealth = totalHealth;
 	obj.health = health;
 	obj.engine = engine;
 	obj.suspension = suspension;
@@ -845,8 +879,7 @@ function Tank(sessionId, position, rotation, texture, health, engine,
 	obj.tower.rotation.set(0, tower.rY, 0);
 
 	obj.toString = function() {
-		return "Tank[sessionId:{0},position:{1},rotation:{2},texture:{3},health:{4}]"
-				.format(sessionId, position, rotation, texture, health);
+		return "Tank[sessionId:{0},position:{1},rotation:{2},texture:{3},health:{4}]".format(sessionId, position, rotation, texture, health);
 	};
 
 	TASK_MANAGER.addTask(obj);
@@ -873,11 +906,9 @@ function TankManager() {
 }
 
 /**
- * 
- * @param {THREE.Vector3}
- *            obj
- * @param {number}
- *            speed
+ *
+ * @param {THREE.Vector3} obj
+ * @param {number} speed
  */
 function changePosition(obj, speed) {
 	if (obj.newPosition && !obj.positionLock) {
@@ -905,9 +936,7 @@ function changePosition(obj, speed) {
 				obj.position.y += (bY) ? stepY : -stepY;
 				obj.position.z += (bZ) ? stepZ : -stepZ;
 
-				if (obj.position.x < newPosition.x != bX
-						&& obj.position.y < newPosition.y != bY
-						&& obj.position.z < newPosition.z != bZ) {
+				if (obj.position.x < newPosition.x != bX && obj.position.y < newPosition.y != bY && obj.position.z < newPosition.z != bZ) {
 					obj.position.x = newPosition.x;
 					obj.position.y = newPosition.y;
 					obj.position.z = newPosition.z;
@@ -918,11 +947,9 @@ function changePosition(obj, speed) {
 }
 
 /**
- * 
- * @param {THREE.Vector3}
- *            obj
- * @param {number}
- *            speed
+ *
+ * @param {THREE.Vector3} obj
+ * @param {number} speed
  */
 function changeRotation(obj, speed) {
 	if (obj.newRotation && !obj.rotationLock) {
@@ -935,17 +962,16 @@ function changeRotation(obj, speed) {
 }
 
 /**
- * 
- * @param {THREE.Vector3}
- *            obj
- * @param {number}
- *            speed
+ *
+ * @param {THREE.Vector3} obj
+ * @param {number} speed
  */
 function changeTowerRotation(obj, speed) {
 	var tower = obj.tower;
 	if (tower) {
 		changeRotation(tower, speed);
-	} else {
+	}
+	else {
 		console.error("Tower not found");
 	}
 }
@@ -962,13 +988,41 @@ function TaskManager() {
 	run();
 	function run() {
 
-		for ( var i in tasks) {
+		for ( var i in tasks ) {
 			var task = tasks[i];
 			changePosition(task, 1);
-			changeRotation(task, 0.1)
+			changeRotation(task, 0.1);
 			changeTowerRotation(task, 0.1)
 		}
 
 		setTimeout(run, 1);
 	}
+}
+
+function TankInfoLabelController() {
+	var that = this;
+	var targetNameLabel;
+	var targetHealthLabel;
+
+	this.show = function(tank) {
+		// remove old label
+		that.hide();
+
+		// create target name label
+		targetNameLabel = create2DTextSprite(tank.id, "14px Arial", "#000000");
+		targetNameLabel.position.set(0.4, -0.20, -2);
+
+		// create target health label
+		var healthPerc = 100 / tank.totalHealth * tank.health;
+		targetHealthLabel = create2DTextSprite(healthPerc + "%", "Bold 12px Arial", "#000000");
+		targetHealthLabel.position.set(0.46, -0.3, -2);
+
+		camera.add(targetNameLabel);
+		camera.add(targetHealthLabel);
+	};
+
+	this.hide = function() {
+		camera.remove(targetNameLabel);
+		camera.remove(targetHealthLabel);
+	};
 }
