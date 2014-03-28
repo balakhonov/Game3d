@@ -26,42 +26,42 @@ public class RoomImpl implements Room {
 	private static final Logger LOG = Logger.getLogger(RoomImpl.class);
 
 	/**
-	 * 
+	 *
 	 */
 	private final Set<Channel> CHANNELS = new ConcurrentSet<>();
 
 	/**
-	 * 
+	 *
 	 */
 	private final ConnectionManager CONNECTION_MANAGER = new ConnectionManager();
 
 	/**
-	 * 
+	 *
 	 */
 	private final EffectsManager EFFECTS_MANAGER = new EffectsManager();
 
 	/**
-	 * 
+	 *
 	 */
 	private final Map<String, User> USERS = new ConcurrentHashMap<>();
 
 	/**
-	 * 
+	 *
 	 */
 	private final Map<String, AbstractTank> TANKS = new ConcurrentHashMap<>();
 
 	/**
-	 * 
+	 *
 	 */
 	private final Map<String, MotionController> TANK_MOTION_CONTROLLERS = new ConcurrentHashMap<>();
 
 	/**
-	 * 
+	 *
 	 */
 	private final ScheduledThreadPoolExecutor EXECUTOR = new ScheduledThreadPoolExecutor(1);
 
 	/**
-	 * 
+	 *
 	 */
 	public RoomImpl() {
 		EXECUTOR.scheduleAtFixedRate(new RoomTaskProcessor(this), 0, 10, TimeUnit.MILLISECONDS);
@@ -167,7 +167,7 @@ public class RoomImpl implements Room {
 		private Room room;
 
 		/**
-		 * 
+		 *
 		 */
 		private long startDate = new Date().getTime();
 
@@ -192,14 +192,18 @@ public class RoomImpl implements Room {
 					// if (tank.isConnected()) {
 					mc.move();
 
-					if (mc.isMoving()) {
-						long diff = currentDateTime - startDate;
-
-						if (diff > 60) {
+					long diff = currentDateTime - startDate;
+					if (diff > 60) {
+						if (mc.isMoving() || mc.isChanged()) {
+							mc.setChanged(false);
 							positionChange = true;
 							// update tank position
 							ObjectHandler.updatePosition(room, (AbstractTank) mc.getMovable());
+						}
 
+						if (mc.isTowerMoving() || mc.isTowerChanged()) {
+							mc.setTowerChanged(false);
+							positionChange = true;
 							// update tank tower rotation
 							TankHandler.updateTowerRotation(room, (AbstractTank) mc.getMovable());
 						}
