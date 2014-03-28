@@ -1,0 +1,271 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+ul {
+    list-style: none;
+}
+
+body {
+    background: url(../images/back1000.gif);
+    font-size: 13px;
+    font-family: tahoma, arial, verdana, sans-serif, 'Lucida Sans', serif;
+    color: #eeeeee;
+}
+
+.lighter {
+    position: absolute;
+    width: 100%;
+    height: 282px;
+    background: url(../images/back2000.png) no-repeat center top;
+    background-position-y: -294px;
+    z-index: -1;
+}
+
+#header {
+    width: 952px;
+    margin-right: auto;
+    margin-left: auto;
+    height: 54px;
+    background-size: 968px;
+}
+
+#header #pngfix-right {
+    background: url(../images/menu_rig.png) no-repeat right top;
+    display: block;
+    width: 10px;
+    height: 50px;
+    float: right;
+}
+
+#header #pngfix-left {
+    background: url(../images/menu_lef.png) no-repeat left top;
+    display: block;
+    width: 10px;
+    height: 50px;
+    float: right;
+}
+
+#header ul.menu {
+    float: right;
+    background: url(../images/menu_mid.png) repeat-x left top;
+    font-size: 11px;
+    height: 61px;
+    margin: 0;
+}
+
+#header ul.menu {
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+}
+
+#header ul.menu > li {
+    list-style: none;
+    position: relative;
+    float: left;
+    border-left: 1px solid #222;
+    height: 45px;
+}
+
+#header ul.menu > li > a, #header ul.menu > li > a:visited {
+    display: block;
+    position: relative;
+    padding: 0 15px;
+    line-height: 44px;
+    color: #0EBCC2;
+    background: #000;
+    border-left: solid 1px #000;
+    border-right: solid 1px #000;
+}
+
+.sign-in-form {
+    position: absolute;
+    width: 300px;
+    left: 50%;
+    margin-left: -150px;
+    margin-top: 100px;
+    padding: 10px;
+    border: 1px solid #dddddd;
+    border-collapse: separate;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.sign-in-form legend {
+    color: #888888;
+}
+
+.sign-in-form button {
+    display: inline-block;
+    width: 135px;
+    height: 48px;
+    font-size: 20px;
+    color: #fff;
+    padding: 4px 12px;
+    margin-bottom: 0;
+    margin-top: 23px;
+    margin-left: 80px;
+    line-height: 20px;
+    text-align: center;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+    vertical-align: middle;
+    cursor: pointer;
+    background-color: #007700;
+    background-repeat: repeat-x;
+    border: 1px solid #cccccc;
+    border-color: #e6e6e6 #e6e6e6 #bfbfbf;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#ffe6e6e6', GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+    -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+    -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.sign-in-form button:hover {
+    background-color: #008800;
+}
+
+.sign-in-form input {
+    width: 283px;
+}
+
+.copyright {
+    color: #fff;
+    width: 170px;
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    margin-left: -85px;
+}
+
+.copyright a {
+    color: #0EBCC2;
+}
+
+#content-wrapper {
+    width: 952px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+#content-header {
+    position: relative;
+    height: 30px;
+    background: #010101;
+    -webkit-border-top-left-radius: 3px;
+    -webkit-border-top-right-radius: 3px;
+    -moz-border-radius-topleft: 3px;
+    -moz-border-radius-topright: 3px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    -webkit-box-shadow: 0 7px 10px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: 0 7px 10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 7px 10px rgba(0, 0, 0, 0.5);
+}
+
+#container {
+    -webkit-box-shadow: 0 7px 10px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: 0 7px 10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 7px 10px rgba(0, 0, 0, 0.5);
+}
+
+#container .left canvas {
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+}
+
+#container #main {
+    position: relative;
+    overflow: hidden;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+#container #main button {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    display: inline-block;
+    width: 407px;
+    height: 48px;
+    font-size: 20px;
+    color: #fff;
+    padding: 4px 12px;
+    margin-bottom: 0;
+    margin-top: 23px;
+    margin-left: 80px;
+    line-height: 20px;
+    text-align: center;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+    vertical-align: middle;
+    cursor: pointer;
+    background-color: #007700;
+    background-repeat: repeat-x;
+    border: 1px solid #cccccc;
+    border-color: #e6e6e6 #e6e6e6 #bfbfbf;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#ffe6e6e6', GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+    -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+    -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+#container #main button:hover {
+    background-color: #008800;
+}
+
+.left {
+    float: left;
+}
+
+.right {
+    float: right;
+}
+
+.right select {
+    width: 414px;
+}
+
+.tank-list {
+    list-style: none;
+    margin-top: 15px;
+}
+
+.tank-list li {
+    float: left;
+    width: 100px;
+    height: 64px;
+    margin: 2px;
+    border: 1px solid #dddddd;
+    border-collapse: separate;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+.tank-list li:hover, .tank-list li.selected {
+    opacity: 1;
+}
+
+.tank-list li img {
+    height: 64px;
+}
+
+.tank-list li:hover {
+    background: #eeeeee;
+}

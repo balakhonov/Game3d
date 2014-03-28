@@ -39,7 +39,7 @@
     <script type='text/javascript' src="/resources/media/js/util.js"></script>
     <script type='text/javascript' src="/resources/media/js/three-extensions.js"></script>
     <script type='text/javascript' src="/resources/media/js/key-listener.js"></script>
-    
+
     <style type="text/css">
     	.QOverlay {
 			background-color: #ffffff;
@@ -67,13 +67,13 @@
 			left: 5px;
 			color: #000000;
 		}
-		
+
 		ul {
 			margin: 0;
 			padding:0;
 			list-style: none;
 		}
-		
+
 		ul.top-bars li {
 			border:solid 1px #000000;
 			width: 100px;
@@ -81,15 +81,15 @@
 			font-size: 12px;
 			font-weight: bold;
 		}
-		
+
 		.health-bar {
-			
+
 		}
-		
+
 		.exp-bar {
-			
+
 		}
-		
+
 		.gradient-green {
 			background: #b4ddb4; /* Old browsers */
 			background: -moz-linear-gradient(top, #b4ddb4 0%, #83c783 17%, #52b152 33%, #008a00 67%, #005700 83%, #002400 100%); /* FF3.6+ */
@@ -100,7 +100,7 @@
 			background: linear-gradient(to bottom, #b4ddb4 0%,#83c783 17%,#52b152 33%,#008a00 67%,#005700 83%,#002400 100%); /* W3C */
 			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b4ddb4', endColorstr='#002400',GradientType=0 ); /* IE6-9 */
 		}
-		
+
 		.gradient-gray {
 			background: rgb(245,246,246); /* Old browsers */
 			background: -moz-linear-gradient(top, rgba(245,246,246,1) 0%, rgba(219,220,226,1) 21%, rgba(184,186,198,1) 49%, rgba(199,201,204,1) 80%, rgba(191,191,191,1) 100%); /* FF3.6+ */

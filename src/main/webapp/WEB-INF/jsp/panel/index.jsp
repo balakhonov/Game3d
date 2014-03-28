@@ -10,6 +10,9 @@
     <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
     <title>Room ${ROOM_ID}</title>
 
+    <link href="http://bootstrap-ru.com/assets/css/bootstrap.css" rel="stylesheet"/>
+    <link href="/resources/media/css/main.css" rel="stylesheet"/>
+
     <!-- JQuery -->
     <script type='text/javascript' src="/resources/media/js/jquery/jquery-1.8.3.js"></script>
     <script type="text/javascript" src="/resources/media/js/jquery/jquery.websocket-0.0.1.js"></script>
@@ -35,66 +38,49 @@
     <script type='text/javascript' src="/resources/media/js/util.js"></script>
     <script type='text/javascript' src="/resources/media/js/three-extensions.js"></script>
     <script type='text/javascript' src="/resources/media/js/key-listener.js"></script>
-
-    <style type="text/css">
-        #container {
-            width: 800px;
-            position: absolute;
-            left: 50%;
-            margin-left: -400px;
-        }
-
-        .left {
-            float: left;
-        }
-
-        .right {
-            float: right;
-        }
-
-        .tank-list {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .tank-list li {
-            float: left;
-            width: 100px;
-            height: 60px;
-            margin: 2px;
-            border: 1px solid #dddddd;
-            border-collapse: separate;
-            -webkit-border-radius: 4px;
-            -moz-border-radius: 4px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .tank-list li:hover {
-            background: #eeeeee;
-        }
-    </style>
 </head>
-<body style="margin: 0; padding: 0;">
-<div id="container">
-    <div class="left">
-        <div id="canvas" style="width:500px;height: 300px;"></div>
-        <ul class="tank-list">
-        </ul>
+<body>
+<div class="lighter"></div>
+<div id="header-wrapper">
+    <div id="header">
+        <div class="header-menu-wrapper">
+            <div id="pngfix-right"></div>
+            <ul class="menu">
+                <li class="page_item"><a title="" href="/">Main</a></li>
+                <li class="page_item"><a title="Feedback" href="#">Feedback</a></li>
+            </ul>
+            <div id="pngfix-left"></div>
+        </div>
     </div>
-    <div class="right">
-        <form action="/room" method="post">
-            <select class="rooms-list" multiple="multiple" name="roomId">
-                <option value="1" selected>Room 1</option>
-                <option value="2">Room 2</option>
-            </select>
-            <input type="hidden" name="tankType" value="0"/>
-            <br/>
-            <button type="submit" class="btn">Start</button>
-        </form>
+</div>
+
+<div id="content-wrapper">
+    <div id="content-header">
+    </div>
+    <div id="container">
+        <div id="main">
+            <form action="/room" method="post">
+                <div class="left">
+                    <div id="canvas" style="width:500px;height: 300px;"></div>
+                    <ul class="tank-list">
+                    </ul>
+                </div>
+                <div class="right">
+                    <select class="rooms-list" multiple="multiple" name="roomId">
+                        <option value="1" selected>Room 1</option>
+                    </select>
+                    <input type="hidden" name="tankType" value="0"/>
+                    <br/>
+                </div>
+                <button type="submit" class="">Go!</button>
+            </form>
+        </div>
     </div>
 </div>
 <script type='text/javascript' src="/resources/media/js/account.js"></script>
+
+<div class="copyright">
+    Created By <a href="http://www.linkedin.com/profile/view?id=217815692" title="Balakhonov Yurii">Balakhonov Yurii</a>
+</div>
 </body>
 </html>

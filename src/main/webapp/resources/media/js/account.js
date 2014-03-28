@@ -66,7 +66,8 @@ function init() {
 		function mousemove(event) {
 			if (left < event.pageX) {
 				OBJ_TANK.rotation.y += 0.1;
-			} else {
+			}
+			else {
 				OBJ_TANK.rotation.y -= 0.1;
 			}
 			left = event.pageX;
@@ -106,7 +107,7 @@ function loadObjects() {
 
 	var groundMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x111111, map: initTexture });
 
-	var groundTexture = THREE.ImageUtils.loadTexture(OBJECTS_PATH + "grasslight-big.jpg", undefined, function () {
+	var groundTexture = THREE.ImageUtils.loadTexture(OBJECTS_PATH + "grasslight-big.jpg", undefined, function() {
 		groundMaterial.map = groundTexture;
 	});
 	groundTexture.wrapS = groundTexture.wrapT = THREE.RepeatWrapping;
@@ -118,13 +119,18 @@ function loadObjects() {
 	mesh.receiveShadow = true;
 	scene.add(mesh);
 
-	TANK_OBJ_SET.forEach(function (id) {
+	TANK_OBJ_SET.forEach(function(id) {
 
 		function onLoad(object) {
 			var index = TANK_MANAGER.length;
 
 			// add tank item to tanks list
-			$('.tank-list').append('<li data="{0}"><img src="/resources/media/js/obj/{1}.png" style="width: 100px;" class="img-rounded"/></li>'.format(index, id));
+			var li = $('<li data="{0}"><img src="/resources/media/js/obj/{1}.png" style="width: 100px;" class="img-rounded"/></li>'.format(index, id));
+			$('.tank-list').append(li);
+
+			if (index == 0) {
+				li.addClass("selected");
+			}
 
 			// add tank to manager
 			TANK_MANAGER.push(object);
@@ -138,7 +144,7 @@ function loadObjects() {
 
 	function onTankSelect(index) {
 		var tank = TANK_MANAGER[index];
-		TANK_MANAGER.forEach(function (obj) {
+		TANK_MANAGER.forEach(function(obj) {
 			scene.remove(obj);
 		});
 		scene.add(tank);
@@ -148,8 +154,13 @@ function loadObjects() {
 		$("input[name=tankType]").val(index);
 	}
 
-	$('.tank-list').on("click", "li", function (el) {
-		var index = $(el.target).parent().attr("data");
+	$('.tank-list').on("click", "li", function(el) {
+		$('.tank-list li').removeClass("selected");
+
+		var li = $(this);
+		li.addClass("selected");
+
+		var index = li.attr("data");
 		onTankSelect(index);
 	});
 }
