@@ -269,3 +269,9 @@ body {
 .tank-list li:hover {
     background: #eeeeee;
 }
+
+.error-label {
+    display: none;
+    color: #ff9999;
+    font-size: 12px;
+}

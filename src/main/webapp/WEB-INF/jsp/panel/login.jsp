@@ -1,3 +1,4 @@
+<%--@elvariable id="VALIDATION_ERROR" type="String"--%>
 <%@ page language="java" contentType="text/html; charset=utf-8"
          pageEncoding="ISO-8859-1" %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -7,6 +8,44 @@
     <title>Title</title>
     <link href="http://bootstrap-ru.com/assets/css/bootstrap.css" rel="stylesheet"/>
     <link href="/resources/media/css/main.css" rel="stylesheet"/>
+
+    <script type='text/javascript' src="/resources/media/js/jquery/jquery-1.8.3.js"></script>
+
+    <script type="text/javascript">
+        $(function() {
+            $("#start-button").on("click", postAuth);
+
+            function postAuth() {
+                console.log("postAuth");
+
+                $(".error-label").hide();
+
+                var data = {};
+                data.userName = $("input[name=user-name]").val();
+
+                $.post("/", data, callbackPostAuth);
+            }
+
+            /**
+             *
+             * @param {{RESULT_CODE:number, MESSAGE:string}} data
+             */
+            function callbackPostAuth(data) {
+                console.log("callbackPostAuth", data);
+                switch (data.RESULT_CODE) {
+                    case 0:
+                        window.location = "/";
+                        break;
+                    case 1:
+                        $(".error-label").html(data.MESSAGE);
+                        $(".error-label").show();
+                        break;
+                    default:
+                        console.error("Unknown error: " + data.RESULT_CODE + ", " + data.MESSAGE);
+                }
+            }
+        });
+    </script>
 </head>
 <body>
 <div class="lighter"></div>
@@ -23,15 +62,14 @@
     </div>
 </div>
 <div class="sign-in-form table-bordered">
-    <form action="/" method="post">
-        <fieldset>
-            <legend>Start the game</legend>
-            <label>User name:</label>
-            <input type="text" placeholder="Type your name here" name="user-name"/>
-            <br/>
-            <button type="submit" class="">Start</button>
-        </fieldset>
-    </form>
+    <fieldset>
+        <legend>Start the game</legend>
+        <label>User name:</label>
+        <input type="text" placeholder="Type your name here" name="user-name"/>
+
+        <div class="error-label"></div>
+        <button id="start-button">Start</button>
+    </fieldset>
 </div>
 
 <div class="copyright">

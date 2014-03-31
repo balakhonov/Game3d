@@ -17,10 +17,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
+import sun.security.validator.ValidatorException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,14 +51,16 @@ public class IndexController extends AbstractController {
 	public static final Map<String, User> USERS_MAP = new ConcurrentHashMap<>();
 	private static int userIdGenerator = 0;
 
-	@RequestMapping(value = { "/" }, method = RequestMethod.GET)
+	@RequestMapping(value = {"/"}, method = RequestMethod.GET)
 	public ModelAndView index(HttpServletRequest request) {
 		try {
 			if (USERS_MAP.containsKey(request.getSession().getId())) {
-				LOG.info("User found");
+				LOG.info("User found: " + request.getSession().getId());
+				LOG.info("USERS_MAP: " + USERS_MAP);
 				return account(request.getSession().getId());
 			} else {
-				LOG.info("User not found");
+				LOG.info("User not found: " + request.getSession().getId());
+				LOG.info("USERS_MAP: " + USERS_MAP);
 				return new ModelAndView("panel/login");
 			}
 		} catch (Exception e) {
@@ -77,30 +82,43 @@ public class IndexController extends AbstractController {
 		return new ModelAndView("panel/index", mapData);
 	}
 
-	@RequestMapping(value = { "/" }, method = RequestMethod.POST)
-	public ModelAndView logIn(HttpServletRequest request) {
+	@RequestMapping(value = {"/"}, method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> logIn(HttpServletRequest request) {
+		Map<String, Object> mapData = new HashMap<>();
 		try {
 			String sessionId = request.getSession().getId();
+			String userName = request.getParameter("userName");
+
+			if (userName == null || userName.isEmpty()) {
+				throw new ValidatorException("User name should be empty");
+			}
 
 			User user = new User();
 			user.setId(++userIdGenerator);
-			user.setName(request.getParameter("user-name"));
+			user.setName(userName);
 			user.setActive(true);
 			user.setSessionId(sessionId);
 
 			USERS_MAP.put(sessionId, user);
 
-			return account(sessionId);
+			mapData.put("RESULT_CODE", 0);
+		} catch (ValidatorException e) {
+			mapData.put("RESULT_CODE", 1);
+			mapData.put("MESSAGE", e.getMessage());
 		} catch (Exception e) {
 			LOG.error(e);
-			return getErrorPageView();
+			mapData.put("RESULT_CODE", 999);
+			mapData.put("MESSAGE", e.getMessage());
 		}
+
+		return mapData;
 	}
 
-	@RequestMapping(value = { "/room" }, method = RequestMethod.POST)
+	@RequestMapping(value = {"/room"}, method = RequestMethod.POST)
 	public ModelAndView enterRoom(@RequestParam(required = true, value = "roomId") int roomId,
-			@RequestParam(required = true, value = "tankType") int tankType,
-			HttpServletRequest request) {
+								  @RequestParam(required = true, value = "tankType") int tankType,
+								  HttpServletRequest request) {
 		LOG.info("tankType: " + tankType);
 		LOG.info("roomId: " + roomId);
 		String sessionId = request.getSession().getId();
@@ -124,7 +142,7 @@ public class IndexController extends AbstractController {
 		return enterRoom(user);
 	}
 
-	@RequestMapping(value = { "/room" }, method = RequestMethod.GET)
+	@RequestMapping(value = {"/room"}, method = RequestMethod.GET)
 	public ModelAndView enterRoom(HttpServletRequest request) {
 		User user = USERS_MAP.get(request.getSession().getId());
 		if (user == null) {
