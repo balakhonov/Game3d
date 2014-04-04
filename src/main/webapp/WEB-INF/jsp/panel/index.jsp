@@ -38,8 +38,15 @@
     <script type='text/javascript' src="/resources/media/js/util.js"></script>
     <script type='text/javascript' src="/resources/media/js/three-extensions.js"></script>
     <script type='text/javascript' src="/resources/media/js/key-listener.js"></script>
+
+    <script type="text/html" id="not-support-html">
+        Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.
+        <br/>
+        Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.
+    </script>
 </head>
 <body>
+<div id="webgl-not-suppoerted"><span></span></div>
 <div class="lighter"></div>
 <div id="header-wrapper">
     <div id="header">
@@ -77,6 +84,7 @@
         </div>
     </div>
 </div>
+<script src="/resources/media/js/Detector.js"></script>
 <script type='text/javascript' src="/resources/media/js/account.js"></script>
 
 <div class="copyright">

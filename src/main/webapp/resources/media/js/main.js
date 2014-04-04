@@ -1,3 +1,5 @@
+if (!Detector.webgl) Detector.addGetWebGLMessage();
+
 if (!SESSION_ID) {
 	throw new Error("SESSION_ID not found!");
 }
@@ -11,7 +13,7 @@ console.info("SESSION_ID:", SESSION_ID);
 console.info("TANK_OBJ_SET:", TANK_OBJ_SET);
 
 var w = window;
-var camera, scene, renderer;
+var camera, scene, renderer, stats;
 var geometry, material, mesh;
 
 var cameraIsBind = false;
@@ -42,7 +44,7 @@ function ResourceManager() {
 		QueryLoader.selectorPreload = "body";
 		QueryLoader.withLogo = true;
 		QueryLoader.init(function() {
-			for ( var i in items ) {
+			for (var i in items) {
 				var call = items[i];
 				call();
 			}
@@ -139,11 +141,11 @@ keyHandler.addKeyUpListener([68, 39], 0, keyRightUpListener);
 keyHandler.addKeyDownListener([83, 40], 0, keyBottomDownListener);
 keyHandler.addKeyUpListener([83, 40], 0, keyBottomUpListener);
 // tower left
-keyHandler.addKeyDownListener(90, 10, keyTowerLeftDownListener);
-keyHandler.addKeyUpListener(90, 10, keyTowerLeftUpListener);
+keyHandler.addKeyDownListener(90, 0, keyTowerLeftDownListener);
+keyHandler.addKeyUpListener(90, 0, keyTowerLeftUpListener);
 // tower right
-keyHandler.addKeyDownListener(88, 10, keyTowerRightDownListener);
-keyHandler.addKeyUpListener(88, 10, keyTowerRightUpListener);
+keyHandler.addKeyDownListener(88, 0, keyTowerRightDownListener);
+keyHandler.addKeyUpListener(88, 0, keyTowerRightUpListener);
 
 // fire 32
 keyHandler.addKeyDownListener(32, 0, keyFireListener);
@@ -254,7 +256,7 @@ function showTanksLabels() {
 	TANK_INFO_LABEL_CONTROLLER.hide();
 
 	if (objects && objects[0]) {
-		for ( var i in objects ) {
+		for (var i in objects) {
 			var object = objects[i];
 			if (object.object instanceof THREE.Line) {
 				continue;
@@ -271,7 +273,7 @@ function showTanksLabels() {
 		}
 	}
 
-	setTimeout(showTanksLabels, 200);
+	setTimeout(showTanksLabels, 500);
 }
 
 function create2DTextSprite(text, font, color) {
@@ -334,7 +336,7 @@ function keyFireListener() {
 	var ray = new THREE.Raycaster(startEndPos.s, direction);
 	var rayIntersects = ray.intersectObjects(scene.children, true);
 
-	for ( var i in rayIntersects ) {
+	for (var i in rayIntersects) {
 		var object = rayIntersects[i];
 		var target = findTankObjectByChield(object.object);
 
@@ -411,7 +413,7 @@ function createBacksight(offset1, offset2, num) {
 	backsight.position.set(camera.position.x, camera.position.y - 0.05, camera.position.z - 2);
 
 	var step = 2 * Math.PI / num;
-	for ( var i = 0; i < num; i++ ) {
+	for (var i = 0; i < num; i++) {
 		var x1 = Math.cos(i * step) * offset1;
 		var x2 = Math.cos(i * step) * offset2;
 		var y1 = Math.sin(i * step) * offset1;
@@ -439,7 +441,7 @@ function createRechargeLabel(offset1, offset2, maxLines, lines) {
 	var step = (Math.PI / maxLines / 2);
 	var angleOffset = Math.PI / 1.5;
 
-	for ( var i = maxLines - 1; i > 0; i-- ) {
+	for (var i = maxLines - 1; i > 0; i--) {
 		if (maxLines - i > lines) {
 			break;
 		}
@@ -486,7 +488,7 @@ function animateBacksight(start, end, inc) {
 
 		this.timer = setTimeout(function() {
 			animateBacksight(start, end, inc);
-		}, 10);
+		}, 300);
 	}
 }
 
@@ -567,11 +569,10 @@ function initTankObjects(tanks) {
 function init() {
 	// scene
 	scene = new THREE.Scene();
-	scene.fog = new THREE.Fog(0xcce0ff, 0.1, 150);
+//	scene.fog = new THREE.Fog(0xffffff, 1, 50);
 
 	// camera
 	camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
-	// camera.position.set(0, 8, 8);
 	camera.rotation.z = 0;
 	camera.rotation.x = -Math.PI / 5;
 	camera.lookAt(scene.position);
@@ -591,9 +592,15 @@ function init() {
 		antialias: true
 	});
 	renderer.setSize(window.innerWidth, window.innerHeight);
-	renderer.setClearColor(scene.fog.color);
+//	renderer.setClearColor(scene.fog.color);
+	renderer.autoClear = false;
 
 	document.body.appendChild(renderer.domElement);
+
+	// statistic
+	stats = new Stats();
+	document.body.appendChild(stats.domElement);
+
 	$("canvas").hide();
 
 	loadObjects();
@@ -680,7 +687,7 @@ function onInitAllTanks(data) {
 
 	var tanks = [];
 
-	for ( var i in data ) {
+	for (var i in data) {
 		var obj = data[i];
 		tanks.push(createTankObject(obj));
 	}
@@ -752,9 +759,10 @@ function onObjectLocationChange(data) {
 }
 
 function onWindowResize() {
-	renderer.setSize(window.innerWidth, window.innerHeight);
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
+
+	renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function loadObjects() {
@@ -769,6 +777,35 @@ function loadObjects() {
 
 	// load tanks
 	loadTankResources();
+
+	loadSceneCube();
+}
+
+function loadSceneCube() {
+	var path = "/resources/media/images/textures/cube/skybox/";
+	var format = '.jpg';
+	var urls = [
+		path + 'px' + format, path + 'nx' + format,
+		path + 'py' + format, path + 'ny' + format,
+		path + 'pz' + format, path + 'nz' + format
+	];
+
+	var textureCube = THREE.ImageUtils.loadTextureCube(urls, new THREE.CubeRefractionMapping());
+
+	var shader = THREE.ShaderLib[ "cube" ];
+	shader.uniforms[ "tCube" ].value = textureCube;
+
+	var material = new THREE.ShaderMaterial({
+		fragmentShader: shader.fragmentShader,
+		vertexShader: shader.vertexShader,
+		uniforms: shader.uniforms,
+		depthWrite: false,
+		side: THREE.BackSide
+
+	});
+
+	mesh = new THREE.Mesh(new THREE.BoxGeometry(1000, 1000, 1000), material);
+	scene.add(mesh);
 }
 
 function loadTankResources() {
@@ -810,6 +847,25 @@ function callbackLoadInteriorTexture(texture) {
 	mesh.receiveShadow = true;
 
 	scene.add(mesh);
+
+	OBJ_MTL_LOADER.load(OBJECTS_PATH + "MI-8_1" + ".obj", OBJECTS_PATH + "MI-8_1" + ".mtl", function(object) {
+		object.scale.set(30, 30, 30);
+		object.position.set(-20, 0, -20);
+
+		scene.add(object);
+
+		var o2 = object.clone();
+		o2.position.set(10, 0, -20);
+		scene.add(o2);
+
+		var o3 = object.clone();
+		o3.position.set(40, 0, -20);
+		scene.add(o3);
+
+		var o4 = object.clone();
+		o4.position.set(70, 0, -20);
+		scene.add(o4);
+	});
 }
 
 function onAllResourceLoaded() {
@@ -837,6 +893,8 @@ function animate() {
 
 function render() {
 	renderer.render(scene, camera);
+
+	stats.update();
 }
 
 function Tank(sessionId, position, rotation, texture, totalHealth, health, engine, suspension, tower, weapon, tankType) {
@@ -988,14 +1046,14 @@ function TaskManager() {
 	run();
 	function run() {
 
-		for ( var i in tasks ) {
+		for (var i in tasks) {
 			var task = tasks[i];
 			changePosition(task, 1);
 			changeRotation(task, 0.1);
 			changeTowerRotation(task, 0.1)
 		}
 
-		setTimeout(run, 1);
+		setTimeout(run, 5);
 	}
 }
 

@@ -11,43 +11,17 @@
 
     <script type='text/javascript' src="/resources/media/js/jquery/jquery-1.8.3.js"></script>
 
-    <script type="text/javascript">
-        $(function() {
-            $("#start-button").on("click", postAuth);
-
-            function postAuth() {
-                console.log("postAuth");
-
-                $(".error-label").hide();
-
-                var data = {};
-                data.userName = $("input[name=user-name]").val();
-
-                $.post("/", data, callbackPostAuth);
-            }
-
-            /**
-             *
-             * @param {{RESULT_CODE:number, MESSAGE:string}} data
-             */
-            function callbackPostAuth(data) {
-                console.log("callbackPostAuth", data);
-                switch (data.RESULT_CODE) {
-                    case 0:
-                        window.location = "/";
-                        break;
-                    case 1:
-                        $(".error-label").html(data.MESSAGE);
-                        $(".error-label").show();
-                        break;
-                    default:
-                        console.error("Unknown error: " + data.RESULT_CODE + ", " + data.MESSAGE);
-                }
-            }
-        });
+    <script type="text/html" id="not-support-html">
+        Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.
+        <br/>
+        Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.
     </script>
+
+    <script src="/resources/media/js/Detector.js"></script>
+    <script src="/resources/media/js/login.js"></script>
 </head>
 <body>
+<div id="webgl-not-suppoerted"><span></span></div>
 <div class="lighter"></div>
 <div id="header-wrapper">
     <div id="header">

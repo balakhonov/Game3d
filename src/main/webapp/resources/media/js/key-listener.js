@@ -101,7 +101,7 @@ function KeyHandler() {
 
 	function startAction(keyCode, eventActionMap) {
 		if (isArray(eventActionMap[keyCode])) {
-			for (i in eventActionMap[keyCode]) {
+			for (var i in eventActionMap[keyCode]) {
 				var actionArray = eventActionMap[keyCode];
 				var action = actionArray[i];
 				action.callback();
@@ -121,4 +121,4 @@ function KeyHandler() {
 			}
 		}, timeout);
 	}
-};
+}

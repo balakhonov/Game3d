@@ -111,9 +111,17 @@
 			background: linear-gradient(to bottom, rgba(245,246,246,1) 0%,rgba(219,220,226,1) 21%,rgba(184,186,198,1) 49%,rgba(199,201,204,1) 80%,rgba(191,191,191,1) 100%); /* W3C */
 			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f5f6f6', endColorstr='#bfbfbf',GradientType=0 ); /* IE6-9 */
 		}
+
+        #stats{
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
 	</style>
 </head>
 <body style="margin: 0; padding: 0;">
+<script src="/resources/media/js/Detector.js"></script>
+<script src="http://threejs.org/examples/js/libs/stats.min.js"></script>
 <div style="position:absolute; left:10px; top:10px;">
 	<ul class="top-bars">
 		<li><div class="health-bar gradient-green"><span class="cur">100</span>/<span class="max">100</span></div></li>

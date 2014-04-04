@@ -1,3 +1,7 @@
+if (!Detector.webgl) {
+	$("#webgl-not-suppoerted span").html($("#not-support-html").html());
+	$("#webgl-not-suppoerted").show();
+}
 if (!SESSION_ID) {
 	throw new Error("SESSION_ID not found!");
 }

@@ -11,6 +11,7 @@ import game3d.websocketserver.handler.ObjectHandler;
 import game3d.websocketserver.handler.TankHandler;
 import io.netty.channel.Channel;
 import io.netty.util.internal.ConcurrentSet;
+import org.apache.log4j.Logger;
 
 import java.util.Date;
 import java.util.Map;
@@ -18,8 +19,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.log4j.Logger;
 
 
 public class RoomImpl implements Room {
